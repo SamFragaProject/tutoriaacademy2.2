@@ -65,37 +65,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadUserData = async (userId: string) => {
     try {
-      console.log('Intentando cargar datos del usuario:', userId);
+      console.log('✅ Intentando cargar datos del usuario:', userId);
       
       const { data, error } = await supabase
         .from('usuarios')
         .select('*')
         .eq('id', userId)
-        .maybeSingle(); // Cambiado de .single() a .maybeSingle() para no fallar si no encuentra
+        .maybeSingle();
 
       if (error) {
-        console.error('Error cargando datos de usuario:', error);
-        // Crear datos temporales si falla
-        setUserData({
+        console.error('❌ Error cargando datos de usuario:', error);
+        // Crear datos temporales si falla y continuar
+        const tempUserData: UserData = {
           id: userId,
           escuela_id: '11111111-1111-1111-1111-111111111111',
           nombre: 'Usuario',
           apellidos: 'Temporal',
-          email: '',
+          email: user?.email || '',
           rol: 'profesor',
           avatar_url: null
-        });
-      } else if (data) {
-        console.log('Datos de usuario cargados:', data);
+        };
+        console.log('⚠️ Usando datos temporales:', tempUserData);
+        setUserData(tempUserData);
+        setLoading(false);
+        return;
+      }
+      
+      if (data) {
+        console.log('✅ Datos de usuario cargados correctamente:', data);
         setUserData(data as UserData);
       } else {
-        console.warn('No se encontraron datos para el usuario');
-        setUserData(null);
+        console.warn('⚠️ No se encontraron datos, creando perfil temporal');
+        // Usuario no existe en la tabla, crear temporal
+        const tempUserData: UserData = {
+          id: userId,
+          escuela_id: '11111111-1111-1111-1111-111111111111',
+          nombre: 'Usuario',
+          apellidos: 'Temporal',
+          email: user?.email || '',
+          rol: 'profesor',
+          avatar_url: null
+        };
+        setUserData(tempUserData);
       }
     } catch (error) {
-      console.error('Error en loadUserData:', error);
-      setUserData(null);
+      console.error('❌ Error crítico en loadUserData:', error);
+      // Aún con error, crear datos temporales para no bloquear
+      const tempUserData: UserData = {
+        id: userId,
+        escuela_id: '11111111-1111-1111-1111-111111111111',
+        nombre: 'Usuario',
+        apellidos: 'Temporal',
+        email: user?.email || '',
+        rol: 'profesor',
+        avatar_url: null
+      };
+      setUserData(tempUserData);
     } finally {
+      console.log('✅ Loading finalizado');
       setLoading(false);
     }
   };
