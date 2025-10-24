@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Card, PrimaryButton, SecondaryButton, Chip, ProgressBar } from '../components/ui';
+import { Card } from '../components/ui/card';
+import { Chip } from '../components/ui/chip';
+import { PrimaryButton, SecondaryButton, ProgressBar } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { MOCK_EARLY_ALERTS, MOCK_QUESTION_ANALYTICS, MOCK_TEACHER_KPIS, MOCK_TEACHER_GROUPS, MOCK_HEATMAP_DATA, MOCK_GROUP_REPORTS } from '../constants';
 import { AlertTriangle, Clock, Activity, Zap, CheckCircle, TrendingUp, BarChart2, BookCopy, FilePlus, BrainCircuit, Loader2, Check, Send, Files, ClipboardList, AlertCircle, Users, Calendar, BookOpen, FileText, MessageSquare, Award } from 'lucide-react';
@@ -111,10 +113,10 @@ export const TeacherDashboardPage: React.FC = () => {
     ];
 
     const quickActions = [
-        { label: 'Crear Examen', icon: FilePlus, color: 'primary' },
-        { label: 'Ver Grupos', icon: Users, color: 'secondary' },
-        { label: 'Calificaciones', icon: BarChart2, color: 'success' },
-        { label: 'Mensajes', icon: MessageSquare, color: 'warning' },
+        { label: 'Crear Examen', icon: FilePlus, variant: 'primary' as const },
+        { label: 'Ver Grupos', icon: Users, variant: 'secondary' as const },
+        { label: 'Calificaciones', icon: BarChart2, variant: 'success' as const },
+        { label: 'Mensajes', icon: MessageSquare, variant: 'warning' as const },
     ];
 
     return (
@@ -130,16 +132,9 @@ export const TeacherDashboardPage: React.FC = () => {
             </div>
 
             {/* Quick Actions Chips */}
-            <div className="ne-chips ne-animate-in" style={{ marginBottom: '32px' }}>
+            <div className="flex flex-wrap items-center gap-3 mb-8">
                 {quickActions.map((action, i) => (
-                    <button key={i} className="ne-chip" style={{cursor:'pointer',border:'none'}}>
-                        <div className="ne-chip-icon">
-                            <action.icon size={20} />
-                        </div>
-                        <div className="ne-chip-content">
-                            <div className="ne-chip-title">{action.label}</div>
-                        </div>
-                    </button>
+                    <Chip key={i} icon={action.icon} label={action.label} variant={action.variant} />
                 ))}
             </div>
 
