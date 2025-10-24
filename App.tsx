@@ -17,6 +17,7 @@ import type { MetaAchievement } from './types';
 import MetaAchievementToast from './components/MetaAchievementToast';
 import { OnboardingB2BPage } from './pages/OnboardingB2BPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { NeoDashboardPage } from './pages/NeoDashboardPage';
 
 
 const AppContent: React.FC = () => {
@@ -46,6 +47,9 @@ const AppContent: React.FC = () => {
           <Route path="/privacidad" element={<LegalPage type="privacy" />} />
           <Route path="/contacto" element={<LegalPage type="contact" />} />
         </Route>
+
+        {/* Neo-Glass Pastel Demo (public, no deps) */}
+        <Route path="/neo" element={<NeoDashboardPage />} />
 
         {/* Auth Pages */}
         <Route path="/login" element={<LoginPage />} />
