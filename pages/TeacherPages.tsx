@@ -23,6 +23,7 @@ import { ExamCreatorSimple } from '../components/teacher/ExamCreatorSimple';
 import { EnhancedExamCreatorTest } from '../components/teacher/EnhancedExamCreatorTest';
 import { TaskManager } from '../components/teacher/TaskManager';
 import { CommunicationHub } from '../components/teacher/CommunicationHub';
+import { SimpleTeacherDashboard } from './SimpleTeacherDashboard';
 
 
 const PageHeader: React.FC<{ title: string, subtitle: string }> = ({ title, subtitle }) => (
@@ -87,7 +88,9 @@ const KpiProgressCard: React.FC<{ title: string; value: number; description: str
 );
 
 export const TeacherDashboardPage: React.FC = () => {
-    return <EnhancedTeacherDashboard />;
+    // Temporalmente usando SimpleTeacherDashboard mientras se corrigen datos en Supabase
+    return <SimpleTeacherDashboard />;
+    // return <EnhancedTeacherDashboard />; // Descomentar cuando RLS esté deshabilitado
 };
 
 export const GroupsPage: React.FC = () => (
