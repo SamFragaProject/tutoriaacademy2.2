@@ -1,0 +1,23 @@
+# Vercel ignore file
+# Evitar archivos duplicados y carpetas innecesarias
+
+# Documentación
+*.md
+docs/
+
+# Archivos de configuración locales
+.env
+.env.local
+
+# Scripts
+*.ps1
+
+# Archivos de prueba
+test-*.ts
+test-*.tsx
+
+# SQL schemas
+*.sql
+
+# Node modules (ya se ignora por defecto)
+node_modules/
