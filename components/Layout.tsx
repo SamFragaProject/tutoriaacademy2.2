@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Home, Compass, MessageSquare, BarChart2, CheckSquare, Trophy, Settings, Shield, Users, FileText, Key, BarChart, Mail, Power, Menu, X, BrainCircuit, Bot, SlidersHorizontal, Brain, PanelLeftClose, PanelLeftOpen, Library, LayoutDashboard, Calendar, Star, Send, Play, Pause, Coffee, Clock, BookCopy, UsersRound, ClipboardPenLine, LayoutGrid, Banknote, Building, School, BarChart3, Sun, Moon, ChevronLeft, GraduationCap, CheckCircle, Search } from 'lucide-react';
+import { Home, Compass, MessageSquare, BarChart2, CheckSquare, Trophy, Settings, Shield, Users, FileText, Key, BarChart, Mail, Power, Menu, X, BrainCircuit, Bot, SlidersHorizontal, Brain, PanelLeftClose, PanelLeftOpen, Library, LayoutDashboard, Calendar, Star, Send, Play, Pause, Coffee, Clock, BookCopy, UsersRound, ClipboardPenLine, LayoutGrid, Banknote, Building, School, BarChart3, Sun, Moon, ChevronLeft, GraduationCap, CheckCircle, Search, Plus } from 'lucide-react';
+import { Button } from './ui/button'
+import { Input } from './ui/input'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import type { User, UserPreferences } from '../types';
 import { PrimaryButton, SecondaryButton } from './ui';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -424,64 +427,28 @@ export const TeacherLayout: React.FC = () => {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
                 {/* Topbar */}
                 <header className="ne-topbar">
-                    <button 
-                        onClick={() => setSidebarOpen(!isSidebarOpen)}
-                        style={{ 
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '40px',
-                            height: '40px',
-                            border: 'none',
-                            background: 'transparent',
-                            color: 'var(--ne-text-secondary)',
-                            cursor: 'pointer',
-                            borderRadius: '8px'
-                        }}
-                        className="lg:hidden"
-                    >
+                    <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="lg:hidden inline-flex items-center justify-center h-10 w-10 rounded-input text-[color:var(--ne-text-secondary)]">
                         <Menu size={20} />
                     </button>
 
-                    {/* Search */}
-                    <div className="ne-search hidden md:flex" style={{ maxWidth: '400px' }}>
-                        <Search size={18} style={{ color: 'var(--ne-text-secondary)' }} />
-                        <input 
-                            type="text" 
-                            placeholder="Buscar estudiantes, exámenes..." 
-                            style={{ 
-                                border: 'none', 
-                                background: 'transparent', 
-                                outline: 'none',
-                                width: '100%',
-                                color: 'var(--ne-text)',
-                                fontSize: '14px'
-                            }}
-                        />
+                    {/* Search pill */}
+                    <div className="hidden md:flex items-center gap-2 max-w-md w-full">
+                        <div className="h-12 w-12 rounded-input border border-border bg-white flex items-center justify-center text-[color:var(--ne-text-secondary)]">
+                            <Search size={18} />
+                        </div>
+                        <Input placeholder="Buscar estudiantes, exámenes..." className="flex-1" />
                     </div>
 
                     {/* Right Actions */}
-                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div className="ml-auto flex items-center gap-3">
+                        <Button size="sm" className="hidden md:inline-flex"><Plus className="mr-2 h-4 w-4"/>Crear</Button>
                         <ThemeToggle />
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <span style={{ fontWeight: 600, color: 'var(--ne-text)', fontSize: '14px' }} className="hidden sm:block">
-                                {userData?.nombre || 'Profesor'}
-                            </span>
-                            <div style={{
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%',
-                                background: 'linear-gradient(135deg, var(--ne-primary), var(--ne-primary-dark))',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: 'white',
-                                fontWeight: 700,
-                                fontSize: '16px',
-                                boxShadow: 'var(--ne-shadow-1)'
-                            }}>
-                                {userData?.nombre?.[0] || 'P'}
-                            </div>
+                        <div className="flex items-center gap-3">
+                            <span className="hidden sm:block text-[14px] font-semibold text-[color:var(--ne-text)]">{userData?.nombre || 'Profesor'}</span>
+                            <Avatar>
+                                <AvatarImage src={userData?.avatar_url || ''} />
+                                <AvatarFallback>{userData?.nombre?.[0] || 'P'}</AvatarFallback>
+                            </Avatar>
                         </div>
                     </div>
                 </header>
