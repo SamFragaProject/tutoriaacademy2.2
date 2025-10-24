@@ -33,26 +33,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('🔵 AuthContext: useEffect inicial ejecutándose');
+    
     // Obtener sesión inicial
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔵 AuthContext: getSession completado', { hasSession: !!session, hasUser: !!session?.user });
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        loadUserData(session.user.id, session.user.email);
+        console.log('🔵 AuthContext: Usuario encontrado, cargando datos...');
+        loadUserData(session.user.id, session.user.email).catch(err => {
+          console.error('🔴 Error no capturado en loadUserData:', err);
+          setLoading(false);
+        });
       } else {
+        console.log('🔵 AuthContext: No hay sesión, setLoading(false)');
         setLoading(false);
       }
+    }).catch(err => {
+      console.error('🔴 Error en getSession:', err);
+      setLoading(false);
     });
 
     // Escuchar cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        console.log('🔵 AuthContext: onAuthStateChange disparado', { event: _event, hasSession: !!session });
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await loadUserData(session.user.id, session.user.email);
+          await loadUserData(session.user.id, session.user.email).catch(err => {
+            console.error('🔴 Error no capturado en loadUserData (onChange):', err);
+            setLoading(false);
+          });
         } else {
           setUserData(null);
           setLoading(false);
