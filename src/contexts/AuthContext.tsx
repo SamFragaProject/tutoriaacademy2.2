@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        loadUserData(session.user.id);
+        loadUserData(session.user.id, session.user.email);
       } else {
         setLoading(false);
       }
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await loadUserData(session.user.id);
+          await loadUserData(session.user.id, session.user.email);
         } else {
           setUserData(null);
           setLoading(false);
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const loadUserData = async (userId: string) => {
+  const loadUserData = async (userId: string, userEmail?: string) => {
     try {
       console.log('✅ Intentando cargar datos del usuario:', userId);
       
@@ -81,11 +81,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           escuela_id: '11111111-1111-1111-1111-111111111111',
           nombre: 'Usuario',
           apellidos: 'Temporal',
-          email: user?.email || '',
+          email: userEmail || 'demo@escuela.com',
           rol: 'profesor',
           avatar_url: null
         };
-        console.log('⚠️ Usando datos temporales:', tempUserData);
+        console.log('⚠️ Usando datos temporales por error:', tempUserData);
         setUserData(tempUserData);
         setLoading(false);
         return;
@@ -102,10 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           escuela_id: '11111111-1111-1111-1111-111111111111',
           nombre: 'Usuario',
           apellidos: 'Temporal',
-          email: user?.email || '',
+          email: userEmail || 'demo@escuela.com',
           rol: 'profesor',
           avatar_url: null
         };
+        console.log('⚠️ Usando datos temporales (no encontrado):', tempUserData);
         setUserData(tempUserData);
       }
     } catch (error) {
@@ -116,13 +117,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         escuela_id: '11111111-1111-1111-1111-111111111111',
         nombre: 'Usuario',
         apellidos: 'Temporal',
-        email: user?.email || '',
+        email: userEmail || 'demo@escuela.com',
         rol: 'profesor',
         avatar_url: null
       };
+      console.log('⚠️ Usando datos temporales por excepción:', tempUserData);
       setUserData(tempUserData);
     } finally {
-      console.log('✅ Loading finalizado');
+      console.log('✅ Loading finalizado - setLoading(false)');
       setLoading(false);
     }
   };
