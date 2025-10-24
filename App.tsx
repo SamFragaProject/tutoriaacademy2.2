@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PublicLayout, StudentLayout, TeacherLayout, DirectorLayout, AdminLayout } from './components/Layout';
 import { HomePage, BlogIndexPage, BlogPostPage, HelpPage, LegalPage } from './pages/PublicPages';
-import { LoginPage } from './pages/AuthPages';
+import { LoginPage } from './src/pages/LoginPage';
 import { DashboardPage, SubjectsPage, SyllabusPage, AgendaPage, StatisticsPage, TutorPage, DiagnosisPage, PracticesPage, SimulacroPage, RankingPage, ConfigurationPage, GamesPage, GeneratingPlanPage, OnboardingPage, LibraryPage, ExamPage } from './pages/StudentPages';
 import { TeacherDashboardPage, GroupsPage, QuestionBankPage, TeacherExamsPage, TeacherResultsPage, TutorCopilotPage, ScreeningPage, GradingPage, AIExamCreatorPage, TaskManagerPage, CommunicationHubPage } from './pages/TeacherPages';
 import { DirectorDashboardPage, SchoolManagementPage, TeachersPage, AcademicAnalysisPage, SubscriptionPage, StudentsPage } from './pages/DirectorPages';
