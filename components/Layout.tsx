@@ -348,45 +348,16 @@ const teacherNavItems = [
 ];
 
 export const TeacherLayout: React.FC = () => {
-    const { user, signOut: logout } = useAuth() as any;
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
-    const [showOnboarding, setShowOnboarding] = useState(false);
-    // Lazy import del asistente para no cargar en todas las páginas
-    const [TeacherAIAssistant, setTeacherAIAssistant] = useState<React.ComponentType | null>(null);
 
-    useEffect(() => {
-        import('./teacher/TeacherAIAssistant').then(module => {
-            setTeacherAIAssistant(() => module.TeacherAIAssistant);
-        });
-    }, []);
-
-    // Detectar si es la primera vez del usuario
-    useEffect(() => {
-        if (user) {
-            const hasSeenOnboarding = localStorage.getItem(`onboarding:${user.id}:seen`);
-            if (!hasSeenOnboarding) {
-                setShowOnboarding(true);
-            }
-        }
-    }, [user]);
-
-    const handleOnboardingComplete = () => {
-        if (user) {
-            localStorage.setItem(`onboarding:${user.id}:seen`, 'true');
-        }
-        setShowOnboarding(false);
-    };
-
+    // ULTRA MINIMALISTA - sin dependencias que puedan fallar
     const navLinkClasses = (path: string) => `group flex items-center p-3 px-4 gap-4 rounded-lg transition-colors duration-fast ease-in-out justify-start ${location.pathname.startsWith(path) ? 'bg-primary/20 text-primary font-semibold' : 'text-text-secondary hover:bg-surface-2'}`;
     const iconClasses = (path: string) => `h-5 w-5 transition-colors flex-shrink-0 ${location.pathname.startsWith(path) ? 'text-primary' : 'text-text-secondary group-hover:text-text-primary'}`;
 
-
     return (
         <div className="min-h-screen bg-background">
-            {/* Debug banner (auto-oculta tras despliegue estable) */}
-                        <div style={{position:'fixed',top:0,left:0,right:0,zIndex:1000,background:'#E6FFFA',color:'#234E52',padding:'4px 8px',fontSize:12,borderBottom:'1px solid #B2F5EA'}}>DEBUG: TeacherLayout cargado</div>
-             <aside className={`fixed top-0 left-0 z-40 h-screen transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 bg-surface-1 border-r border-border flex flex-col w-64`}>
+            <aside className={`fixed top-0 left-0 z-40 h-screen transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 bg-surface-1 border-r border-border flex flex-col w-64`}>
                 <div className="h-20 flex items-center shrink-0 border-b border-border px-6">
                     <div className="flex items-center gap-3">
                         <BrainCircuit className="h-8 w-8 text-primary" />
@@ -401,8 +372,8 @@ export const TeacherLayout: React.FC = () => {
                         </NavLink>
                     ))}
                 </nav>
-                 <div className="shrink-0 p-4 border-t border-border">
-                    <button onClick={logout} className="flex items-center p-3 px-4 gap-4 w-full rounded-lg text-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors group justify-start">
+                <div className="shrink-0 p-4 border-t border-border">
+                    <button onClick={() => window.location.href = '/#/login'} className="flex items-center p-3 px-4 gap-4 w-full rounded-lg text-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors group justify-start">
                         <Power className="h-5 w-5" />
                         <span>Cerrar Sesión</span>
                     </button>
@@ -410,34 +381,28 @@ export const TeacherLayout: React.FC = () => {
             </aside>
             <div className={`flex flex-col min-h-screen lg:pl-64`}>
                 <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between h-20 px-4 sm:px-6 lg:px-8">
-                     <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="text-text-secondary lg:hidden">
+                    <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="text-text-secondary lg:hidden">
                         <Menu size={20} />
                     </button>
                     
-                    {/* Breadcrumbs - hidden on mobile */}
                     <div className="hidden md:block">
-                        <Breadcrumbs />
+                        <span className="text-sm text-text-secondary">Dashboard del Profesor</span>
                     </div>
                     
                     <div className="relative ml-auto flex items-center gap-4">
                         <ThemeToggle />
-                        <ProfileDropdown user={user} onLogout={logout} />
+                        <div className="flex items-center gap-3">
+                            <span className="font-semibold text-text-primary hidden sm:block">Profesor</span>
+                            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold text-white ring-2 ring-white/50">
+                                P
+                            </div>
+                        </div>
                     </div>
                 </header>
                 <main className="flex-grow p-4 sm:p-6 lg:p-8">
                     <Outlet />
                 </main>
-                
-                {/* Asistente Unificado reemplaza TeacherAIAssistant */}
             </div>
-            <UnifiedAssistant />
-            {/* OnboardingTour desactivado - ayuda integrada en chat */}
-            {/* {showOnboarding && (
-                <OnboardingTour
-                    onComplete={handleOnboardingComplete}
-                    onDismiss={handleOnboardingComplete}
-                />
-            )} */}
         </div>
     );
 };

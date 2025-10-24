@@ -88,9 +88,7 @@ const KpiProgressCard: React.FC<{ title: string; value: number; description: str
 );
 
 export const TeacherDashboardPage: React.FC = () => {
-    const { user, userData, userRole } = useAuth();
-
-    // Dashboard simplificado que SIEMPRE funciona
+    // ULTRA MINIMALISTA - sin dependencias externas que puedan fallar
     return (
         <div style={{ padding: '2rem', fontFamily: 'system-ui, sans-serif', minHeight: '100vh', background: '#f8fafc' }}>
             <div style={{ 
@@ -250,57 +248,8 @@ export const TeacherDashboardPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* User Info Panel */}
-                <div style={{
-                    backgroundColor: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    padding: '1.5rem'
-                }}>
-                    <h3 style={{ 
-                        fontSize: '1.25rem', 
-                        fontWeight: '600', 
-                        marginBottom: '1rem',
-                        color: '#2d3748'
-                    }}>
-                        👤 Información de la Sesión
-                    </h3>
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                        gap: '1rem',
-                        fontSize: '0.95rem'
-                    }}>
-                        <div>
-                            <strong style={{ color: '#4a5568' }}>Email:</strong>
-                            <span style={{ marginLeft: '0.5rem', color: '#2d3748' }}>
-                                {user?.email || 'profesor@demo.com'}
-                            </span>
-                        </div>
-                        <div>
-                            <strong style={{ color: '#4a5568' }}>Rol:</strong>
-                            <span style={{ marginLeft: '0.5rem', color: '#2d3748' }}>
-                                {userRole || 'profesor'}
-                            </span>
-                        </div>
-                        <div>
-                            <strong style={{ color: '#4a5568' }}>Nombre:</strong>
-                            <span style={{ marginLeft: '0.5rem', color: '#2d3748' }}>
-                                {userData?.nombre || 'Juan'} {userData?.apellidos || 'Martínez'}
-                            </span>
-                        </div>
-                        <div>
-                            <strong style={{ color: '#4a5568' }}>Estado:</strong>
-                            <span style={{ marginLeft: '0.5rem', color: '#48bb78' }}>
-                                🟢 Conectado
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
                 {/* Next Steps */}
                 <div style={{
-                    marginTop: '2rem',
                     backgroundColor: '#edf2f7',
                     borderRadius: '8px',
                     padding: '1.5rem'
