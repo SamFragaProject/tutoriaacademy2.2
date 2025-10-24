@@ -65,17 +65,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadUserData = async (userId: string) => {
     try {
+      console.log('Intentando cargar datos del usuario:', userId);
+      
       const { data, error } = await supabase
         .from('usuarios')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle(); // Cambiado de .single() a .maybeSingle() para no fallar si no encuentra
 
       if (error) {
         console.error('Error cargando datos de usuario:', error);
-        setUserData(null);
-      } else {
+        // Crear datos temporales si falla
+        setUserData({
+          id: userId,
+          escuela_id: '11111111-1111-1111-1111-111111111111',
+          nombre: 'Usuario',
+          apellidos: 'Temporal',
+          email: '',
+          rol: 'profesor',
+          avatar_url: null
+        });
+      } else if (data) {
+        console.log('Datos de usuario cargados:', data);
         setUserData(data as UserData);
+      } else {
+        console.warn('No se encontraron datos para el usuario');
+        setUserData(null);
       }
     } catch (error) {
       console.error('Error en loadUserData:', error);
