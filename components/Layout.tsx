@@ -487,7 +487,7 @@ export const TeacherLayout: React.FC = () => {
                 </header>
 
                 {/* Page Content */}
-                <main style={{ flex: 1, padding: '32px', overflow: 'auto' }}>
+                <main style={{ flex: 1, padding: '32px', overflowY: 'auto', overflowX: 'hidden' }}>
                     <Outlet />
                 </main>
             </div>
