@@ -16,6 +16,7 @@ import { on } from './services/eventBus';
 import type { MetaAchievement } from './types';
 import MetaAchievementToast from './components/MetaAchievementToast';
 import { OnboardingB2BPage } from './pages/OnboardingB2BPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 
 const AppContent: React.FC = () => {
@@ -75,8 +76,8 @@ const AppContent: React.FC = () => {
         </Route>
 
         {/* Teacher Pages */}
-        <Route path="/docente" element={<ProtectedRoute><TeacherLayout /></ProtectedRoute>}>
-          <Route path="dashboard" element={<TeacherDashboardPage />} />
+        <Route path="/docente" element={<ProtectedRoute><ErrorBoundary><TeacherLayout /></ErrorBoundary></ProtectedRoute>}>
+          <Route path="dashboard" element={<ErrorBoundary><TeacherDashboardPage /></ErrorBoundary>} />
           <Route path="grupos" element={<GroupsPage />} />
           <Route path="banco-preguntas" element={<QuestionBankPage />} />
           <Route path="examenes" element={<TeacherExamsPage />} />
@@ -124,10 +125,10 @@ const App: React.FC = () => {
   console.log('🚀 App component rendering');
   
   return (
-    <>
+    <ErrorBoundary>
       <AppContent />
       <ToastContainer />
-    </>
+    </ErrorBoundary>
   );
 };
 
