@@ -367,7 +367,7 @@ export const TeacherLayout: React.FC = () => {
     const isActive = (path: string) => location.pathname.startsWith(path);
 
     return (
-        <div className="ne-canvas" style={{ minHeight: '100vh', display: 'flex' }}>
+        <div className="ne-canvas" style={{ height: '100vh', display: 'flex', overflow: 'hidden' }}>
             {/* Sidebar */}
             <aside className={`ne-sidebar ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
                 {/* Logo */}
@@ -421,7 +421,7 @@ export const TeacherLayout: React.FC = () => {
             </aside>
 
             {/* Main Content */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
                 {/* Topbar */}
                 <header className="ne-topbar">
                     <button 
