@@ -160,3 +160,7 @@ export const useAuth = () => {
   }
   return context;
 };
+
+// Exportar todo lo necesario
+export { AuthContext };
+export type { AuthContextType, UserData };
