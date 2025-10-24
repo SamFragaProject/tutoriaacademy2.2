@@ -320,7 +320,8 @@ export const StudentLayout: React.FC = () => {
                 </main>
             </div>
             <StudyTimerWidget />
-            <UnifiedAssistant />
+            {/* Temporalmente deshabilitado para evitar errores de render por dependencias del usuario */}
+            {/* <UnifiedAssistant /> */}
             {/* OnboardingTour desactivado - ayuda integrada en chat */}
             {/* {showOnboarding && (
                 <OnboardingTour
