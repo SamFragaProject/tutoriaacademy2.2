@@ -347,7 +347,7 @@ const teacherNavItems = [
 ];
 
 export const TeacherLayout: React.FC = () => {
-    const { user, logout } = useAuth();
+    const { user, signOut: logout } = useAuth() as any;
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
     const [showOnboarding, setShowOnboarding] = useState(false);
@@ -383,6 +383,8 @@ export const TeacherLayout: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-background">
+            {/* Debug banner (auto-oculta tras despliegue estable) */}
+                        <div style={{position:'fixed',top:0,left:0,right:0,zIndex:1000,background:'#E6FFFA',color:'#234E52',padding:'4px 8px',fontSize:12,borderBottom:'1px solid #B2F5EA'}}>DEBUG: TeacherLayout cargado</div>
              <aside className={`fixed top-0 left-0 z-40 h-screen transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 bg-surface-1 border-r border-border flex flex-col w-64`}>
                 <div className="h-20 flex items-center shrink-0 border-b border-border px-6">
                     <div className="flex items-center gap-3">
