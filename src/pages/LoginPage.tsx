@@ -15,18 +15,20 @@ export function LoginPage() {
     setError('');
     setLoading(true);
     try {
+      console.log('🚀 Iniciando login rápido...', demoEmail);
       const { error: signInError } = await signIn(demoEmail, demoPassword);
       if (signInError) {
+        console.error('❌ Error de login:', signInError);
         setError(signInError.message);
+        setLoading(false);
         return;
       }
-      // Esperar y redirigir
-      setTimeout(() => {
-        navigate('/docente/dashboard');
-      }, 500);
+      console.log('✅ Login exitoso, redirigiendo...');
+      // Redirigir inmediatamente después del login exitoso
+      navigate('/docente/dashboard');
     } catch (err: any) {
+      console.error('❌ Error catch:', err);
       setError(err.message || 'Error al iniciar sesión');
-    } finally {
       setLoading(false);
     }
   };
@@ -37,21 +39,23 @@ export function LoginPage() {
     setLoading(true);
 
     try {
+      console.log('🚀 Iniciando login manual...');
       const { error: signInError } = await signIn(email, password);
       
       if (signInError) {
+        console.error('❌ Error de login:', signInError);
         setError(signInError.message);
+        setLoading(false);
         return;
       }
 
-      // Redirigir al dashboard por defecto (profesor/docente)
-      setTimeout(() => {
-        navigate('/docente/dashboard');
-      }, 500);
+      console.log('✅ Login exitoso, redirigiendo...');
+      // Redirigir inmediatamente
+      navigate('/docente/dashboard');
 
     } catch (err: any) {
+      console.error('❌ Error catch:', err);
       setError(err.message || 'Error al iniciar sesión');
-    } finally {
       setLoading(false);
     }
   };
