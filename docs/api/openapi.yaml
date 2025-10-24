@@ -1,0 +1,390 @@
+openapi: 3.0.3
+info:
+  title: TutoriA Academy API
+  version: 1.0.0
+  description: API para exámenes, banco de ítems, grupos y flujo académico B2B.
+servers:
+  - url: https://api.tutoria.local/v1
+    description: Dev/Staging
+  - url: https://api.tutoria.com/v1
+    description: Prod
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login con email/password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+              required: [email, password]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken: { type: string }
+                  refreshToken: { type: string }
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /groups:
+    get:
+      tags: [Groups]
+      summary: Lista grupos
+      parameters:
+        - in: query
+          name: teacherId
+          schema: { type: string }
+        - in: query
+          name: schoolId
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Group' }
+
+  /groups/{groupId}/students:
+    get:
+      tags: [Groups]
+      summary: Lista alumnos del grupo
+      parameters:
+        - in: path
+          name: groupId
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Student' }
+
+  /topics:
+    get:
+      tags: [Catalog]
+      summary: Catálogo de temas/subtemas
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Topic' }
+
+  /items:
+    get:
+      tags: [Items]
+      summary: Buscar ítems
+      parameters:
+        - in: query
+          name: query
+          schema: { type: string }
+        - in: query
+          name: topicId
+          schema: { type: string }
+        - in: query
+          name: difficulty
+          schema: { type: string, enum: [easy, medium, hard] }
+        - in: query
+          name: dok
+          schema: { type: integer, enum: [1,2,3,4] }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count: { schema: { type: integer } }
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Item' }
+    post:
+      tags: [Items]
+      summary: Crear ítem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Item' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Item' }
+
+  /exams:
+    get:
+      tags: [Exams]
+      summary: Listar exámenes por docente
+      parameters:
+        - in: query
+          name: teacherId
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Exam' }
+    post:
+      tags: [Exams]
+      summary: Crear examen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Exam' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Exam' }
+
+  /exams/{examId}:
+    get:
+      tags: [Exams]
+      summary: Obtener examen
+      parameters:
+        - in: path
+          name: examId
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Exam' }
+
+  /exams/{examId}/assign:
+    post:
+      tags: [Exams]
+      summary: Asignar examen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Assignment' }
+      responses:
+        '204': { description: No Content }
+
+  /exams/{examId}/results:
+    get:
+      tags: [Exams]
+      summary: Resultados agregados
+      parameters:
+        - in: path
+          name: examId
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  overview:
+                    type: object
+                    additionalProperties: true
+                  byStudent:
+                    type: array
+                    items: { $ref: '#/components/schemas/StudentResult' }
+
+  /exams/{examId}/submissions:
+    post:
+      tags: [Submissions]
+      summary: Crear/actualizar entrega del alumno
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Submission' }
+      responses:
+        '202': { description: Accepted }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Unauthorized:
+      description: No autorizado
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code: { type: string, example: AUTH_401 }
+              message: { type: string }
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [director, docente, alumno, admin] }
+        schoolId: { type: string }
+        schoolName: { type: string }
+
+    Group:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        subject: { type: string }
+        studentCount: { type: integer }
+
+    Student:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        groupId: { type: string }
+
+    Topic:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        parentId: { type: string, nullable: true }
+
+    Item:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [mc, vf, short, long, match, order] }
+        prompt: { type: string }
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              text: { type: string }
+              isCorrect: { type: boolean }
+        topicId: { type: string }
+        difficulty: { type: string, enum: [easy, medium, hard] }
+        dok:
+          type: integer
+          enum: [1,2,3,4]
+        metrics:
+          type: object
+          properties:
+            successRate: { type: number, format: float }
+            avgTimeSec: { type: integer }
+
+    Exam:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        subject: { type: string }
+        date: { type: string, format: date-time }
+        durationMin: { type: integer }
+        settings:
+          type: object
+          properties:
+            shuffleQuestions: { type: boolean }
+            shuffleOptions: { type: boolean }
+            showResults: { type: boolean }
+        topics:
+          type: array
+          items:
+            type: object
+            properties:
+              topicId: { type: string }
+              weight: { type: integer, minimum: 0, maximum: 100 }
+        distribution:
+          type: array
+          items:
+            type: object
+            properties:
+              type: { type: string, enum: [mc, vf, short, long, match, order] }
+              count: { type: integer }
+        difficulty:
+          type: object
+          properties:
+            easy: { type: integer }
+            medium: { type: integer }
+            hard: { type: integer }
+
+    Assignment:
+      type: object
+      properties:
+        examId: { type: string }
+        groupIds:
+          type: array
+          items: { type: string }
+        studentIds:
+          type: array
+          items: { type: string }
+        window:
+          type: object
+          properties:
+            startISO: { type: string, format: date-time }
+            endISO: { type: string, format: date-time }
+        attempts: { type: integer, minimum: 1, default: 1 }
+        conditions:
+          type: object
+          properties:
+            antiCheat: { type: boolean }
+
+    Submission:
+      type: object
+      properties:
+        examId: { type: string }
+        studentId: { type: string }
+        answers:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId: { type: string }
+              answer: { oneOf: [ { type: string }, { type: array, items: { type: string } } ] }
+              timeSec: { type: integer }
+        completed: { type: boolean }
+
+    StudentResult:
+      type: object
+      properties:
+        studentId: { type: string }
+        score: { type: number }
+        subtopics: { type: object, additionalProperties: { type: number } }
