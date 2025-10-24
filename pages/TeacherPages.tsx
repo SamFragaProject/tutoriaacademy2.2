@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, PrimaryButton, SecondaryButton, Chip, ProgressBar } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { MOCK_EARLY_ALERTS, MOCK_QUESTION_ANALYTICS, MOCK_TEACHER_KPIS, MOCK_TEACHER_GROUPS, MOCK_HEATMAP_DATA, MOCK_GROUP_REPORTS } from '../constants';
-import { AlertTriangle, Clock, Activity, Zap, CheckCircle, TrendingUp, BarChart2, BookCopy, FilePlus, BrainCircuit, Loader2, Check, Send, Files, ClipboardList, AlertCircle } from 'lucide-react';
+import { AlertTriangle, Clock, Activity, Zap, CheckCircle, TrendingUp, BarChart2, BookCopy, FilePlus, BrainCircuit, Loader2, Check, Send, Files, ClipboardList, AlertCircle, Users, Calendar, BookOpen, FileText, MessageSquare, Award } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SubtopicResult, TutorCopilotReport, StudentFocusReport } from '../types';
@@ -24,6 +24,7 @@ import { EnhancedExamCreatorTest } from '../components/teacher/EnhancedExamCreat
 import { TaskManager } from '../components/teacher/TaskManager';
 import { CommunicationHub } from '../components/teacher/CommunicationHub';
 import { SimpleTeacherDashboard } from './SimpleTeacherDashboard';
+import '../styles/neo-glass.css';
 
 
 const PageHeader: React.FC<{ title: string, subtitle: string }> = ({ title, subtitle }) => (
@@ -88,202 +89,168 @@ const KpiProgressCard: React.FC<{ title: string; value: number; description: str
 );
 
 export const TeacherDashboardPage: React.FC = () => {
-    // ULTRA MINIMALISTA - sin dependencias externas que puedan fallar
+    const { userData } = useAuth();
+    
+    useEffect(() => {
+        document.body.classList.add('neo-enterprise');
+        return () => document.body.classList.remove('neo-enterprise');
+    }, []);
+
+    const stats = [
+        { label: 'Total Estudiantes', value: '156', change: '+12%', icon: Users, positive: true },
+        { label: 'Grupos Activos', value: '8', change: '+2', icon: Users, positive: true },
+        { label: 'Exámenes Pendientes', value: '4', change: 'Esta semana', icon: FileText, positive: false },
+        { label: 'Promedio General', value: '8.4', change: '+0.3', icon: Award, positive: true },
+    ];
+
+    const recentActivities = [
+        { title: 'Examen de Matemáticas 3A', subtitle: 'Calificaciones pendientes • Hace 2 horas', icon: FileText },
+        { title: 'Grupo 2B - Tarea entregada', subtitle: '24 de 28 alumnos • Hace 5 horas', icon: CheckCircle },
+        { title: 'Reunión con Padres', subtitle: 'Mañana 10:00 AM • Sala 3', icon: Calendar },
+        { title: 'Nueva práctica asignada', subtitle: 'Grupo 1A • Álgebra Básica', icon: BookOpen },
+    ];
+
+    const quickActions = [
+        { label: 'Crear Examen', icon: FilePlus, color: 'primary' },
+        { label: 'Ver Grupos', icon: Users, color: 'secondary' },
+        { label: 'Calificaciones', icon: BarChart2, color: 'success' },
+        { label: 'Mensajes', icon: MessageSquare, color: 'warning' },
+    ];
+
     return (
-        <div style={{ padding: '2rem', fontFamily: 'system-ui, sans-serif', minHeight: '100vh', background: '#f8fafc' }}>
-            <div style={{ 
-                maxWidth: '1200px', 
-                margin: '0 auto',
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '2rem',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
-            }}>
-                <h1 style={{ 
-                    fontSize: '2.5rem', 
-                    fontWeight: 'bold', 
-                    marginBottom: '0.5rem',
-                    color: '#1a202c',
-                    textAlign: 'center'
-                }}>
-                    🎓 TutoriA Academy - Dashboard del Profesor
+        <div>
+            {/* Welcome Header */}
+            <div style={{ marginBottom: '32px' }}>
+                <h1 style={{ fontSize: '32px', fontWeight: 700, color: 'var(--ne-text)', marginBottom: '8px', letterSpacing: '-0.02em' }}>
+                    Bienvenido, {userData?.nombre || 'Profesor'} 👋
                 </h1>
-                <p style={{ 
-                    textAlign: 'center', 
-                    color: '#718096', 
-                    marginBottom: '2rem',
-                    fontSize: '1.1rem'
-                }}>
-                    Sistema de gestión educativa inteligente
+                <p style={{ fontSize: '15px', color: 'var(--ne-text-secondary)' }}>
+                    Aquí está un resumen de tu actividad docente
                 </p>
+            </div>
 
-                {/* Status Banner */}
-                <div style={{ 
-                    backgroundColor: '#c6f6d5', 
-                    border: '2px solid #68d391',
-                    borderRadius: '8px',
-                    padding: '1.5rem',
-                    marginBottom: '2rem',
-                    textAlign: 'center'
-                }}>
-                    <h2 style={{ 
-                        fontSize: '1.5rem', 
-                        fontWeight: '600', 
-                        marginBottom: '0.5rem',
-                        color: '#2f855a'
-                    }}>
-                        ✅ Sistema Funcionando Correctamente
-                    </h2>
-                    <p style={{ color: '#276749' }}>
-                        Autenticación exitosa • Base de datos conectada • Listo para APIs de IA
-                    </p>
-                </div>
+            {/* Quick Actions Chips */}
+            <div className="ne-chips ne-animate-in" style={{ marginBottom: '32px' }}>
+                {quickActions.map((action, i) => (
+                    <button key={i} className="ne-chip" style={{cursor:'pointer',border:'none'}}>
+                        <div className="ne-chip-icon">
+                            <action.icon size={20} />
+                        </div>
+                        <div className="ne-chip-content">
+                            <div className="ne-chip-title">{action.label}</div>
+                        </div>
+                    </button>
+                ))}
+            </div>
 
-                {/* Quick Stats */}
-                <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                    gap: '1.5rem',
-                    marginBottom: '2rem'
-                }}>
-                    <div style={{
-                        backgroundColor: '#ebf8ff',
-                        border: '1px solid #90cdf4',
-                        borderRadius: '8px',
-                        padding: '1.5rem',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👥</div>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#2c5282', marginBottom: '0.5rem' }}>
-                            Estudiantes Activos
-                        </h3>
-                        <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#2b6cb0' }}>127</p>
-                    </div>
-
-                    <div style={{
-                        backgroundColor: '#f0fff4',
-                        border: '1px solid #9ae6b4',
-                        borderRadius: '8px',
-                        padding: '1.5rem',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📝</div>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#2f855a', marginBottom: '0.5rem' }}>
-                            Exámenes Pendientes
-                        </h3>
-                        <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#38a169' }}>8</p>
-                    </div>
-
-                    <div style={{
-                        backgroundColor: '#fffaf0',
-                        border: '1px solid #fbd38d',
-                        borderRadius: '8px',
-                        padding: '1.5rem',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⚡</div>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#c05621', marginBottom: '0.5rem' }}>
-                            IA Copiloto
-                        </h3>
-                        <p style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#dd6b20' }}>Listo</p>
-                    </div>
-
-                    <div style={{
-                        backgroundColor: '#faf5ff',
-                        border: '1px solid #d6bcfa',
-                        borderRadius: '8px',
-                        padding: '1.5rem',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📊</div>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#6b46c1', marginBottom: '0.5rem' }}>
-                            Promedio Grupal
-                        </h3>
-                        <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#7c3aed' }}>8.7</p>
-                    </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div style={{ marginBottom: '2rem' }}>
-                    <h3 style={{ 
-                        fontSize: '1.5rem', 
-                        fontWeight: '600', 
-                        marginBottom: '1rem',
-                        color: '#2d3748'
-                    }}>
-                        🚀 Acciones Rápidas
-                    </h3>
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                        gap: '1rem'
-                    }}>
-                        {[
-                            { icon: '🤖', title: 'Crear Examen con IA', desc: 'Generar examen automático' },
-                            { icon: '👥', title: 'Gestionar Grupos', desc: 'Ver y organizar estudiantes' },
-                            { icon: '📊', title: 'Ver Resultados', desc: 'Análisis de rendimiento' },
-                            { icon: '💬', title: 'Copiloto IA', desc: 'Asistente inteligente' }
-                        ].map((action, i) => (
-                            <div key={i} style={{
-                                backgroundColor: '#f7fafc',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '8px',
-                                padding: '1rem',
-                                cursor: 'pointer',
-                                transition: 'transform 0.2s',
-                                textAlign: 'center'
-                            }}
-                            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                            >
-                                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{action.icon}</div>
-                                <h4 style={{ fontWeight: '600', color: '#2d3748', marginBottom: '0.25rem' }}>
-                                    {action.title}
-                                </h4>
-                                <p style={{ fontSize: '0.875rem', color: '#718096' }}>
-                                    {action.desc}
-                                </p>
+            {/* Stats Grid */}
+            <div className="ne-grid" style={{ marginBottom: '32px' }}>
+                {stats.map((stat, i) => (
+                    <div key={i} className="ne-col-3 ne-animate-in">
+                        <div className="ne-card">
+                            <div className="ne-card-body">
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                    <span style={{ fontSize: '13px', color: 'var(--ne-text-secondary)', fontWeight: 500 }}>
+                                        {stat.label}
+                                    </span>
+                                    <stat.icon size={20} style={{ color: 'var(--ne-primary)' }} />
+                                </div>
+                                <div style={{ fontSize: '32px', fontWeight: 700, color: 'var(--ne-text)', marginBottom: '8px', letterSpacing: '-0.02em' }}>
+                                    {stat.value}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, color: stat.positive ? 'var(--ne-success)' : 'var(--ne-text-secondary)' }}>
+                                    {stat.positive && <TrendingUp size={14} />}
+                                    {stat.change}
+                                </div>
                             </div>
-                        ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Main Content Grid */}
+            <div className="ne-grid">
+                {/* Recent Activity */}
+                <div className="ne-col-8 ne-animate-in">
+                    <div className="ne-card">
+                        <div className="ne-card-header">
+                            <h3 className="ne-card-title">Actividad Reciente</h3>
+                            <button className="ne-btn-ghost ne-btn-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="ne-card-body">
+                            <div className="ne-list">
+                                {recentActivities.map((activity, i) => (
+                                    <div key={i} className="ne-list-item">
+                                        <div className="ne-list-icon">
+                                            <activity.icon size={20} />
+                                        </div>
+                                        <div className="ne-list-content">
+                                            <div className="ne-list-title">{activity.title}</div>
+                                            <div className="ne-list-subtitle">{activity.subtitle}</div>
+                                        </div>
+                                        <button className="ne-btn-ghost ne-btn-icon">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <path d="M9 18l6-6-6-6"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Next Steps */}
-                <div style={{
-                    backgroundColor: '#edf2f7',
-                    borderRadius: '8px',
-                    padding: '1.5rem'
-                }}>
-                    <h3 style={{ 
-                        fontSize: '1.25rem', 
-                        fontWeight: '600', 
-                        marginBottom: '1rem',
-                        color: '#2d3748'
-                    }}>
-                        📋 Próximos Pasos para Configurar APIs de IA
-                    </h3>
-                    <ul style={{ 
-                        marginLeft: '1.5rem', 
-                        fontSize: '0.95rem', 
-                        color: '#4a5568',
-                        lineHeight: '1.6'
-                    }}>
-                        <li style={{ marginBottom: '0.5rem' }}>
-                            ✅ <strong>Autenticación:</strong> Completada y funcionando
-                        </li>
-                        <li style={{ marginBottom: '0.5rem' }}>
-                            ✅ <strong>Base de datos:</strong> Supabase conectado
-                        </li>
-                        <li style={{ marginBottom: '0.5rem' }}>
-                            ✅ <strong>Despliegue:</strong> Activo en Vercel
-                        </li>
-                        <li style={{ marginBottom: '0.5rem' }}>
-                            🔧 <strong>APIs de IA:</strong> Listo para configurar (OpenAI, Claude, etc.)
-                        </li>
-                        <li style={{ marginBottom: '0.5rem' }}>
-                            🎯 <strong>Flujos de trabajo:</strong> Listos para probar
-                        </li>
-                    </ul>
+                {/* Quick Info Sidebar */}
+                <div className="ne-col-4 ne-animate-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    {/* Calendar Widget */}
+                    <div className="ne-card">
+                        <div className="ne-card-header">
+                            <h3 className="ne-card-title">Esta Semana</h3>
+                        </div>
+                        <div className="ne-card-body">
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div>
+                                    <div style={{ fontSize: '13px', color: 'var(--ne-text-secondary)', marginBottom: '4px' }}>Clases programadas</div>
+                                    <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ne-text)' }}>18</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '13px', color: 'var(--ne-text-secondary)', marginBottom: '4px' }}>Horas de clase</div>
+                                    <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ne-text)' }}>24</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '13px', color: 'var(--ne-text-secondary)', marginBottom: '4px' }}>Reuniones</div>
+                                    <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ne-text)' }}>3</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Quick Links */}
+                    <div className="ne-card">
+                        <div className="ne-card-header">
+                            <h3 className="ne-card-title">Accesos Rápidos</h3>
+                        </div>
+                        <div className="ne-card-body">
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <NavLink to="/docente/grupos" className="ne-btn-secondary" style={{ textDecoration: 'none', width: '100%' }}>
+                                    <Users size={18} />
+                                    Mis Grupos
+                                </NavLink>
+                                <NavLink to="/docente/examenes" className="ne-btn-secondary" style={{ textDecoration: 'none', width: '100%' }}>
+                                    <FileText size={18} />
+                                    Exámenes
+                                </NavLink>
+                                <NavLink to="/docente/calificaciones" className="ne-btn-secondary" style={{ textDecoration: 'none', width: '100%' }}>
+                                    <BarChart2 size={18} />
+                                    Calificaciones
+                                </NavLink>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

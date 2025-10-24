@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Home, Compass, MessageSquare, BarChart2, CheckSquare, Trophy, Settings, Shield, Users, FileText, Key, BarChart, Mail, Power, Menu, X, BrainCircuit, Bot, SlidersHorizontal, Brain, PanelLeftClose, PanelLeftOpen, Library, LayoutDashboard, Calendar, Star, Send, Play, Pause, Coffee, Clock, BookCopy, UsersRound, ClipboardPenLine, LayoutGrid, Banknote, Building, School, BarChart3, Sun, Moon, ChevronLeft, GraduationCap, CheckCircle } from 'lucide-react';
+import { Home, Compass, MessageSquare, BarChart2, CheckSquare, Trophy, Settings, Shield, Users, FileText, Key, BarChart, Mail, Power, Menu, X, BrainCircuit, Bot, SlidersHorizontal, Brain, PanelLeftClose, PanelLeftOpen, Library, LayoutDashboard, Calendar, Star, Send, Play, Pause, Coffee, Clock, BookCopy, UsersRound, ClipboardPenLine, LayoutGrid, Banknote, Building, School, BarChart3, Sun, Moon, ChevronLeft, GraduationCap, CheckCircle, Search } from 'lucide-react';
 import type { User, UserPreferences } from '../types';
 import { PrimaryButton, SecondaryButton } from './ui';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -357,62 +357,137 @@ export const TeacherLayout: React.FC = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
-    const { logout } = useAuth();
+    const { logout, userData } = useAuth();
 
     const handleLogout = async () => {
         await logout();
         navigate('/login');
     };
 
-    // ULTRA MINIMALISTA - sin dependencias que puedan fallar
-    const navLinkClasses = (path: string) => `group flex items-center p-3 px-4 gap-4 rounded-lg transition-colors duration-fast ease-in-out justify-start ${location.pathname.startsWith(path) ? 'bg-primary/20 text-primary font-semibold' : 'text-text-secondary hover:bg-surface-2'}`;
-    const iconClasses = (path: string) => `h-5 w-5 transition-colors flex-shrink-0 ${location.pathname.startsWith(path) ? 'text-primary' : 'text-text-secondary group-hover:text-text-primary'}`;
+    const isActive = (path: string) => location.pathname.startsWith(path);
 
     return (
-        <div className="min-h-screen bg-background">
-            <aside className={`fixed top-0 left-0 z-40 h-screen transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 bg-surface-1 border-r border-border flex flex-col w-64`}>
-                <div className="h-20 flex items-center shrink-0 border-b border-border px-6">
-                    <div className="flex items-center gap-3">
-                        <BrainCircuit className="h-8 w-8 text-primary" />
-                        <span className="text-xl font-bold text-text-primary tracking-tight">TutoriA Academy</span>
+        <div className="ne-canvas" style={{ minHeight: '100vh', display: 'flex' }}>
+            {/* Sidebar */}
+            <aside className={`ne-sidebar ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+                {/* Logo */}
+                <div style={{ 
+                    height: '80px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    paddingLeft: '24px', 
+                    borderBottom: '1px solid var(--ne-border)',
+                    flexShrink: 0
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <BrainCircuit style={{ width: '32px', height: '32px', color: 'var(--ne-primary)' }} />
+                        <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ne-text)' }}>TutoriA</span>
                     </div>
                 </div>
-                <nav className="flex-grow px-4 py-6 space-y-2">
+
+                {/* Navigation */}
+                <nav style={{ flex: 1, padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto' }}>
                     {teacherNavItems.map(item => (
-                        <NavLink key={item.label} to={item.path} onClick={() => setSidebarOpen(false)} className={navLinkClasses(item.path)}>
-                            <item.icon className={iconClasses(item.path)} />
+                        <NavLink 
+                            key={item.label} 
+                            to={item.path} 
+                            onClick={() => setSidebarOpen(false)}
+                            className={`ne-sidebar-item ${isActive(item.path) ? 'active' : ''}`}
+                            style={{ textDecoration: 'none' }}
+                        >
+                            <item.icon size={20} />
                             <span>{item.label}</span>
                         </NavLink>
                     ))}
                 </nav>
-                <div className="shrink-0 p-4 border-t border-border">
-                    <button onClick={handleLogout} className="flex items-center p-3 px-4 gap-4 w-full rounded-lg text-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors group justify-start">
-                        <Power className="h-5 w-5" />
+
+                {/* Logout */}
+                <div style={{ padding: '16px', borderTop: '1px solid var(--ne-border)', flexShrink: 0 }}>
+                    <button 
+                        onClick={handleLogout}
+                        className="ne-sidebar-item"
+                        style={{ 
+                            width: '100%', 
+                            border: 'none', 
+                            background: 'transparent',
+                            color: 'var(--ne-danger)',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        <Power size={20} />
                         <span>Cerrar Sesión</span>
                     </button>
                 </div>
             </aside>
-            <div className={`flex flex-col min-h-screen lg:pl-64`}>
-                <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between h-20 px-4 sm:px-6 lg:px-8">
-                    <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="text-text-secondary lg:hidden">
+
+            {/* Main Content */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                {/* Topbar */}
+                <header className="ne-topbar">
+                    <button 
+                        onClick={() => setSidebarOpen(!isSidebarOpen)}
+                        style={{ 
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '40px',
+                            height: '40px',
+                            border: 'none',
+                            background: 'transparent',
+                            color: 'var(--ne-text-secondary)',
+                            cursor: 'pointer',
+                            borderRadius: '8px'
+                        }}
+                        className="lg:hidden"
+                    >
                         <Menu size={20} />
                     </button>
-                    
-                    <div className="hidden md:block">
-                        <span className="text-sm text-text-secondary">Dashboard del Profesor</span>
+
+                    {/* Search */}
+                    <div className="ne-search hidden md:flex" style={{ maxWidth: '400px' }}>
+                        <Search size={18} style={{ color: 'var(--ne-text-secondary)' }} />
+                        <input 
+                            type="text" 
+                            placeholder="Buscar estudiantes, exámenes..." 
+                            style={{ 
+                                border: 'none', 
+                                background: 'transparent', 
+                                outline: 'none',
+                                width: '100%',
+                                color: 'var(--ne-text)',
+                                fontSize: '14px'
+                            }}
+                        />
                     </div>
-                    
-                    <div className="relative ml-auto flex items-center gap-4">
+
+                    {/* Right Actions */}
+                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <ThemeToggle />
-                        <div className="flex items-center gap-3">
-                            <span className="font-semibold text-text-primary hidden sm:block">Profesor</span>
-                            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold text-white ring-2 ring-white/50">
-                                P
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--ne-text)', fontSize: '14px' }} className="hidden sm:block">
+                                {userData?.nombre || 'Profesor'}
+                            </span>
+                            <div style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                background: 'linear-gradient(135deg, var(--ne-primary), var(--ne-primary-dark))',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontWeight: 700,
+                                fontSize: '16px',
+                                boxShadow: 'var(--ne-shadow-1)'
+                            }}>
+                                {userData?.nombre?.[0] || 'P'}
                             </div>
                         </div>
                     </div>
                 </header>
-                <main className="flex-grow p-4 sm:p-6 lg:p-8">
+
+                {/* Page Content */}
+                <main style={{ flex: 1, padding: '32px', overflow: 'auto' }}>
                     <Outlet />
                 </main>
             </div>
