@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -7,8 +7,15 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
+  
+  // Redirigir cuando el usuario esté disponible (evita condiciones de carrera)
+  useEffect(() => {
+    if (user) {
+      navigate('/docente/dashboard');
+    }
+  }, [user, navigate]);
   
   // Función para login rápido con botones
   const quickLogin = async (demoEmail: string, demoPassword: string) => {
@@ -23,9 +30,7 @@ export function LoginPage() {
         setLoading(false);
         return;
       }
-      console.log('✅ Login exitoso, redirigiendo...');
-      // Redirigir inmediatamente después del login exitoso
-      navigate('/docente/dashboard');
+  console.log('✅ Login exitoso, esperando confirmación de sesión...');
     } catch (err: any) {
       console.error('❌ Error catch:', err);
       setError(err.message || 'Error al iniciar sesión');
@@ -49,9 +54,7 @@ export function LoginPage() {
         return;
       }
 
-      console.log('✅ Login exitoso, redirigiendo...');
-      // Redirigir inmediatamente
-      navigate('/docente/dashboard');
+  console.log('✅ Login exitoso, esperando confirmación de sesión...');
 
     } catch (err: any) {
       console.error('❌ Error catch:', err);
