@@ -5,6 +5,7 @@ import { PrimaryButton, SecondaryButton, ProgressBar } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { MOCK_EARLY_ALERTS, MOCK_QUESTION_ANALYTICS, MOCK_TEACHER_KPIS, MOCK_TEACHER_GROUPS, MOCK_HEATMAP_DATA, MOCK_GROUP_REPORTS } from '../constants';
 import { AlertTriangle, Clock, Activity, Zap, CheckCircle, TrendingUp, BarChart2, BookCopy, FilePlus, BrainCircuit, Loader2, Check, Send, Files, ClipboardList, AlertCircle, Users, Calendar, BookOpen, FileText, MessageSquare, Award } from 'lucide-react';
+import { BarChart as RBarChart, Bar, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { useToast } from '../components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SubtopicResult, TutorCopilotReport, StudentFocusReport } from '../types';
@@ -112,6 +113,21 @@ export const TeacherDashboardPage: React.FC = () => {
         { title: 'Nueva práctica asignada', subtitle: 'Grupo 1A • Álgebra Básica', icon: BookOpen },
     ];
 
+    const transactions = [
+        { title: 'Transferencia Grupo 3A', subtitle: 'Envió de calificaciones • 12:52', amount: -254.00 },
+        { title: 'Devolución Alumno 2B', subtitle: 'Trabajo revisado • 12:30', amount: 42.14 },
+        { title: 'Corrección Examen', subtitle: 'Ajuste manual • 06:51', amount: 50.00 },
+        { title: 'Pago suscripción', subtitle: 'Tarjeta corporativa • 16:12', amount: -14.43 },
+        { title: 'NETFLIX.COM', subtitle: 'Suscripción personal • 01:12', amount: -12.99 },
+        { title: 'Transferencia 1C', subtitle: 'Envió de calificaciones • 12:52', amount: -254.00 },
+    ];
+
+    const balanceData = [
+        { name: 'May', in: 2032, out: 3295 },
+        { name: 'Jun', in: 1820, out: 3010 },
+        { name: 'Jul', in: 2150, out: 2800 },
+    ];
+
     const quickActions = [
         { label: 'Crear Examen', icon: FilePlus, variant: 'primary' as const },
         { label: 'Ver Grupos', icon: Users, variant: 'secondary' as const },
@@ -165,33 +181,33 @@ export const TeacherDashboardPage: React.FC = () => {
 
             {/* Main Content Grid */}
             <div className="ne-grid">
-                {/* Recent Activity */}
+                {/* My Account / Transactions */}
                 <div className="ne-col-8 ne-animate-in">
                     <div className="ne-card">
                         <div className="ne-card-header">
-                            <h3 className="ne-card-title">Actividad Reciente</h3>
-                            <button className="ne-btn-ghost ne-btn-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
-                                </svg>
-                            </button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className="ne-card-title">Mi Cuenta</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button className="ne-btn-secondary"><Send size={16}/> Enviar</button>
+                                <button className="ne-btn-secondary"><Files size={16}/> Adjuntar</button>
+                                <button className="ne-btn-primary"><ClipboardList size={16}/> Revisar</button>
+                            </div>
                         </div>
                         <div className="ne-card-body">
                             <div className="ne-list">
-                                {recentActivities.map((activity, i) => (
+                                {transactions.map((t, i) => (
                                     <div key={i} className="ne-list-item">
                                         <div className="ne-list-icon">
-                                            <activity.icon size={20} />
+                                            <CheckCircle size={18} />
                                         </div>
                                         <div className="ne-list-content">
-                                            <div className="ne-list-title">{activity.title}</div>
-                                            <div className="ne-list-subtitle">{activity.subtitle}</div>
+                                            <div className="ne-list-title">{t.title}</div>
+                                            <div className="ne-list-subtitle">{t.subtitle}</div>
                                         </div>
-                                        <button className="ne-btn-ghost ne-btn-icon">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M9 18l6-6-6-6"/>
-                                            </svg>
-                                        </button>
+                                        <div style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontWeight: 700, color: t.amount >= 0 ? 'var(--ne-success)' : 'var(--ne-danger)' }}>
+                                            {t.amount >= 0 ? `+ ${t.amount.toFixed(2)}` : `- ${Math.abs(t.amount).toFixed(2)}`}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -199,50 +215,54 @@ export const TeacherDashboardPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Quick Info Sidebar */}
+                {/* Right Column Widgets */}
                 <div className="ne-col-4 ne-animate-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    {/* Calendar Widget */}
+                    {/* Balance Widget with mini chart */}
                     <div className="ne-card">
                         <div className="ne-card-header">
-                            <h3 className="ne-card-title">Esta Semana</h3>
+                            <h3 className="ne-card-title">Balance</h3>
                         </div>
                         <div className="ne-card-body">
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                <div>
-                                    <div style={{ fontSize: '13px', color: 'var(--ne-text-secondary)', marginBottom: '4px' }}>Clases programadas</div>
-                                    <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ne-text)' }}>18</div>
-                                </div>
-                                <div>
-                                    <div style={{ fontSize: '13px', color: 'var(--ne-text-secondary)', marginBottom: '4px' }}>Horas de clase</div>
-                                    <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ne-text)' }}>24</div>
-                                </div>
-                                <div>
-                                    <div style={{ fontSize: '13px', color: 'var(--ne-text-secondary)', marginBottom: '4px' }}>Reuniones</div>
-                                    <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ne-text)' }}>3</div>
-                                </div>
+                            <div style={{ height: 160 }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <RBarChart data={balanceData} barCategoryGap={24}>
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} style={{ fontSize: 12, fill: 'var(--ne-text-secondary)' }} />
+                                        <Tooltip cursor={{ fill: 'rgba(111,91,255,0.08)' }} />
+                                        <Bar dataKey="in" fill="#B9C3FF" radius={[8,8,8,8]} />
+                                        <Bar dataKey="out" fill="#E7D8FF" radius={[8,8,8,8]} />
+                                    </RBarChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, fontSize: 13 }}>
+                                <span style={{ color: 'var(--ne-text-secondary)' }}>Incoming</span>
+                                <span style={{ color: 'var(--ne-text)' }}>$ 2032.20</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                                <span style={{ color: 'var(--ne-text-secondary)' }}>Outgoing</span>
+                                <span style={{ color: 'var(--ne-text)' }}>$ 3295.03</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Quick Links */}
+                    {/* My Cards */}
                     <div className="ne-card">
                         <div className="ne-card-header">
-                            <h3 className="ne-card-title">Accesos Rápidos</h3>
+                            <h3 className="ne-card-title">Mi Tarjeta</h3>
                         </div>
                         <div className="ne-card-body">
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <NavLink to="/docente/grupos" className="ne-btn-secondary" style={{ textDecoration: 'none', width: '100%' }}>
-                                    <Users size={18} />
-                                    Mis Grupos
-                                </NavLink>
-                                <NavLink to="/docente/examenes" className="ne-btn-secondary" style={{ textDecoration: 'none', width: '100%' }}>
-                                    <FileText size={18} />
-                                    Exámenes
-                                </NavLink>
-                                <NavLink to="/docente/calificaciones" className="ne-btn-secondary" style={{ textDecoration: 'none', width: '100%' }}>
-                                    <BarChart2 size={18} />
-                                    Calificaciones
-                                </NavLink>
+                            <div style={{
+                                borderRadius: 16,
+                                padding: 20,
+                                color: 'white',
+                                background: 'linear-gradient(135deg, #6F5BFF 0%, #8B7BFF 60%)',
+                                boxShadow: 'var(--ne-shadow-2)'
+                            }}>
+                                <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 24 }}>Credit Card</div>
+                                <div style={{ fontSize: 18, letterSpacing: 4, fontWeight: 700, marginBottom: 8 }}>2221 0050 4680 2089</div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, opacity: 0.9 }}>
+                                    <span>{userData?.nombre || 'Usuario'}</span>
+                                    <span>05/28</span>
+                                </div>
                             </div>
                         </div>
                     </div>
