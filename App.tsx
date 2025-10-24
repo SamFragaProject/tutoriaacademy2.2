@@ -20,8 +20,10 @@ import { OnboardingB2BPage } from './pages/OnboardingB2BPage';
 
 const AppContent: React.FC = () => {
   const { addToast } = useToast();
+  console.log('📱 AppContent rendering');
 
   useEffect(() => {
+    console.log('📱 AppContent mounted');
     const unsubscribe = on('meta-achievement-unlocked', (unlockedAchievement: MetaAchievement) => {
       console.log('Event meta-achievement-unlocked received in App.tsx', unlockedAchievement);
       addToast(<MetaAchievementToast achievement={unlockedAchievement} />);
@@ -29,6 +31,7 @@ const AppContent: React.FC = () => {
     return () => unsubscribe();
   }, [addToast]);
 
+  console.log('📱 AppContent returning HashRouter');
   return (
      <HashRouter>
       <Routes>
@@ -118,8 +121,8 @@ const AppContent: React.FC = () => {
 
 
 const App: React.FC = () => {
-  const { user } = useAuth();
-
+  console.log('🚀 App component rendering');
+  
   return (
     <>
       <AppContent />
