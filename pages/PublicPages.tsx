@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink, useParams, useNavigate } from 'react-router-dom';
 import { motion, Variants } from 'framer-motion';
 import { BarChart, CheckCircle, BrainCircuit, Trophy, Lock, MessageSquare, ShieldCheck, Zap, TrendingUp, Users, Award, Clock, BookOpen, Rocket, Target, FileText, GraduationCap, Star, Sparkles } from 'lucide-react';
 import { Card, StatCard, PrimaryButton, SecondaryButton, ComingSoonTooltip, Chip } from '../components/ui';
@@ -9,6 +9,7 @@ import BrainIllustration from '../components/illustrations/BrainIllustration';
 import RocketIllustration from '../components/illustrations/RocketIllustration';
 import BookIllustration from '../components/illustrations/BookIllustration';
 import GymBrainIllustration from '../components/illustrations/GymBrainIllustration';
+import { useAuth } from '../hooks/useAuth';
 
 const chartData = [
   { name: 'Sem 1', Progreso: 10 },
@@ -20,10 +21,31 @@ const chartData = [
 
 
 export const HomePage: React.FC = () => {
+    const { user, userData, signOut } = useAuth();
+    const navigate = useNavigate();
+    
     const sectionVariants: Variants = {
         hidden: { opacity: 0, y: 50 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" }}
     };
+
+    const handleLogout = async () => {
+        await signOut();
+        navigate('/login');
+    };
+
+    const goToDashboard = () => {
+        if (userData?.rol === 'profesor') {
+            navigate('/docente/dashboard');
+        } else if (userData?.rol === 'director') {
+            navigate('/director/dashboard');
+        } else if (userData?.rol === 'alumno') {
+            navigate('/app/dashboard');
+        } else {
+            navigate('/login');
+        }
+    };
+
 
     const features = [
         { 
@@ -161,6 +183,45 @@ export const HomePage: React.FC = () => {
 
   return (
     <div className="space-y-24 md:space-y-32 pb-24 overflow-x-hidden">
+      {/* Widget de sesión activa */}
+      {user && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3 backdrop-blur-sm bg-opacity-95">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold">
+              {userData?.nombre?.[0] || 'U'}
+            </div>
+            <div className="flex flex-col">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                {userData?.nombre || 'Usuario'}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                {userData?.rol || 'Usuario'}
+              </p>
+            </div>
+            <div className="flex gap-2 ml-2">
+              <button
+                onClick={goToDashboard}
+                className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-1"
+                title="Ir al panel"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-1"
+                title="Cerrar sesión"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Hero - Diseño Dinámico y Original */}
       <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
         {/* Fondo animado con gradientes */}

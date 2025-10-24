@@ -7,15 +7,32 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, user } = useAuth();
+  const { signIn, user, userData } = useAuth();
   const navigate = useNavigate();
   
   // Redirigir cuando el usuario esté disponible (evita condiciones de carrera)
   useEffect(() => {
-    if (user) {
-      navigate('/docente/dashboard');
+    if (user && userData) {
+      console.log('✅ Usuario detectado en LoginPage, redirigiendo según rol:', userData.rol);
+      // Redirigir según el rol del usuario
+      switch(userData.rol) {
+        case 'profesor':
+          navigate('/docente/dashboard');
+          break;
+        case 'director':
+          navigate('/director/dashboard');
+          break;
+        case 'alumno':
+          navigate('/app/dashboard');
+          break;
+        case 'admin':
+          navigate('/admin/dashboard');
+          break;
+        default:
+          navigate('/');
+      }
     }
-  }, [user, navigate]);
+  }, [user, userData, navigate]);
   
   // Función para login rápido con botones
   const quickLogin = async (demoEmail: string, demoPassword: string) => {

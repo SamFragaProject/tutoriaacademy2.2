@@ -20,6 +20,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signUp: (email: string, password: string, userData: Partial<UserData>) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
+  logout: () => Promise<void>; // Alias para compatibilidad
   userRole: 'alumno' | 'profesor' | 'director' | 'admin' | null;
   escuelaId: string | null;
 }
@@ -249,6 +250,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     userRole: userData?.rol || null,
     escuelaId: userData?.escuela_id || null,
+    logout: signOut, // Alias para compatibilidad
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
