@@ -7,8 +7,29 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, userRole } = useAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
+  
+  // Función para login rápido con botones
+  const quickLogin = async (demoEmail: string, demoPassword: string) => {
+    setError('');
+    setLoading(true);
+    try {
+      const { error: signInError } = await signIn(demoEmail, demoPassword);
+      if (signInError) {
+        setError(signInError.message);
+        return;
+      }
+      // Esperar y redirigir
+      setTimeout(() => {
+        navigate('/docente/dashboard');
+      }, 500);
+    } catch (err: any) {
+      setError(err.message || 'Error al iniciar sesión');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -23,18 +44,9 @@ export function LoginPage() {
         return;
       }
 
-      // Esperar un momento para que se carguen los datos del usuario
+      // Redirigir al dashboard por defecto (profesor/docente)
       setTimeout(() => {
-        // Redirigir según el rol
-        if (userRole === 'profesor' || userRole === 'director') {
-          navigate('/docente/dashboard');
-        } else if (userRole === 'alumno') {
-          navigate('/alumno/dashboard');
-        } else if (userRole === 'admin') {
-          navigate('/admin/dashboard');
-        } else {
-          navigate('/');
-        }
+        navigate('/docente/dashboard');
       }, 500);
 
     } catch (err: any) {
@@ -138,12 +150,49 @@ export function LoginPage() {
             </p>
           </div>
 
+          {/* Quick access buttons */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <p className="text-xs text-gray-500 text-center mb-3 font-medium">Acceso rápido de prueba:</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => quickLogin('profesor@demo.com', 'password123')}
+                disabled={loading}
+                className="px-3 py-2 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 transition disabled:opacity-50"
+              >
+                👨‍🏫 Profesor
+              </button>
+              <button
+                type="button"
+                onClick={() => quickLogin('director@demo.com', 'password123')}
+                disabled={loading}
+                className="px-3 py-2 bg-purple-50 border border-purple-200 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-100 transition disabled:opacity-50"
+              >
+                👔 Director
+              </button>
+              <button
+                type="button"
+                onClick={() => quickLogin('alumno1@demo.com', 'password123')}
+                disabled={loading}
+                className="px-3 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition disabled:opacity-50"
+              >
+                🎓 Alumno
+              </button>
+              <button
+                type="button"
+                onClick={() => quickLogin('alumno2@demo.com', 'password123')}
+                disabled={loading}
+                className="px-3 py-2 bg-cyan-50 border border-cyan-200 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-100 transition disabled:opacity-50"
+              >
+                📚 Alumno 2
+              </button>
+            </div>
+          </div>
+
           {/* Demo credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <p className="text-xs text-gray-600 font-medium mb-2">🔐 Credenciales de prueba:</p>
-            <p className="text-xs text-gray-500">
-              <strong>Profesor:</strong> profesor@demo.com / password123<br />
-              <strong>Alumno:</strong> alumno@demo.com / password123
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-500 text-center">
+              💡 Todas las contraseñas de prueba son: <strong>password123</strong>
             </p>
           </div>
         </div>
