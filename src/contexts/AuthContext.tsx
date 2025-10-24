@@ -31,51 +31,94 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
     console.log('🔵 AuthContext: useEffect inicial ejecutándose');
     
-    // Obtener sesión inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('🔵 AuthContext: getSession completado', { hasSession: !!session, hasUser: !!session?.user });
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        console.log('🔵 AuthContext: Usuario encontrado, cargando datos...');
-        loadUserData(session.user.id, session.user.email).catch(err => {
-          console.error('🔴 Error no capturado en loadUserData:', err);
-          setLoading(false);
-        });
-      } else {
-        console.log('🔵 AuthContext: No hay sesión, setLoading(false)');
-        setLoading(false);
-      }
-    }).catch(err => {
-      console.error('🔴 Error en getSession:', err);
-      setLoading(false);
-    });
+    let mounted = true;
 
-    // Escuchar cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        console.log('🔵 AuthContext: onAuthStateChange disparado', { event: _event, hasSession: !!session });
+    // Función para inicializar la sesión
+    const initializeAuth = async () => {
+      try {
+        console.log('🔵 AuthContext: Obteniendo sesión inicial...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!mounted) {
+          console.log('⚠️ Componente desmontado, abortando inicialización');
+          return;
+        }
+
+        if (error) {
+          console.error('🔴 Error obteniendo sesión:', error);
+          setLoading(false);
+          setInitializing(false);
+          return;
+        }
+
+        console.log('🔵 AuthContext: getSession completado', { hasSession: !!session, hasUser: !!session?.user });
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await loadUserData(session.user.id, session.user.email).catch(err => {
-            console.error('🔴 Error no capturado en loadUserData (onChange):', err);
-            setLoading(false);
-          });
+          console.log('🔵 AuthContext: Usuario encontrado en sesión inicial, cargando datos...');
+          await loadUserData(session.user.id, session.user.email);
         } else {
+          console.log('� AuthContext: No hay sesión inicial, setLoading(false)');
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('� Error crítico en initializeAuth:', err);
+        if (mounted) {
+          setLoading(false);
+        }
+      } finally {
+        if (mounted) {
+          console.log('� AuthContext: Inicialización completada');
+          setInitializing(false);
+        }
+      }
+    };
+
+    // Ejecutar inicialización
+    initializeAuth();
+
+    // Escuchar cambios de autenticación (solo después de inicializar)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔵 AuthContext: onAuthStateChange', { event, hasSession: !!session, initializing });
+        
+        // Ignorar eventos durante la inicialización para evitar race conditions
+        if (initializing) {
+          console.log('⚠️ Ignorando evento durante inicialización:', event);
+          return;
+        }
+
+        if (!mounted) {
+          console.log('⚠️ Componente desmontado, ignorando evento:', event);
+          return;
+        }
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          console.log('🔵 AuthContext: Cargando datos por cambio de auth:', event);
+          await loadUserData(session.user.id, session.user.email);
+        } else {
+          console.log('� AuthContext: Sin sesión, limpiando userData');
           setUserData(null);
           setLoading(false);
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+      console.log('🔵 AuthContext: Limpieza completada');
+    };
   }, []);
 
   const loadUserData = async (userId: string, userEmail?: string) => {
@@ -102,7 +145,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         console.log('⚠️ Usando datos temporales por error:', tempUserData);
         setUserData(tempUserData);
-        setLoading(false);
         return;
       }
       
