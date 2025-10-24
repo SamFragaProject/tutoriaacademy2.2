@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { NavLink, Outlet, useLocation, Navigate } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Home, Compass, MessageSquare, BarChart2, CheckSquare, Trophy, Settings, Shield, Users, FileText, Key, BarChart, Mail, Power, Menu, X, BrainCircuit, Bot, SlidersHorizontal, Brain, PanelLeftClose, PanelLeftOpen, Library, LayoutDashboard, Calendar, Star, Send, Play, Pause, Coffee, Clock, BookCopy, UsersRound, ClipboardPenLine, LayoutGrid, Banknote, Building, School, BarChart3, Sun, Moon, ChevronLeft, GraduationCap, CheckCircle } from 'lucide-react';
 import type { User, UserPreferences } from '../types';
@@ -276,6 +276,7 @@ const ProfileDropdown: React.FC<{ user: User | null, onLogout: () => void }> = (
 
 export const StudentLayout: React.FC = () => {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const { isCollapsed, isMobileOpen, setMobileOpen } = useSidebar();
     const [showOnboarding, setShowOnboarding] = useState(false);
 
@@ -296,6 +297,11 @@ export const StudentLayout: React.FC = () => {
         setShowOnboarding(false);
     };
 
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+    };
+
     return (
         <div className="min-h-screen bg-background">
             <StudentSidebar />
@@ -312,7 +318,7 @@ export const StudentLayout: React.FC = () => {
                     
                     <div className="relative ml-auto flex items-center gap-4">
                         <ThemeToggle />
-                        <ProfileDropdown user={user} onLogout={logout} />
+                        <ProfileDropdown user={user} onLogout={handleLogout} />
                     </div>
                 </header>
                 <main className="flex-grow p-4 sm:p-6 lg:p-8">
@@ -350,6 +356,13 @@ const teacherNavItems = [
 export const TeacherLayout: React.FC = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
+    const navigate = useNavigate();
+    const { logout } = useAuth();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+    };
 
     // ULTRA MINIMALISTA - sin dependencias que puedan fallar
     const navLinkClasses = (path: string) => `group flex items-center p-3 px-4 gap-4 rounded-lg transition-colors duration-fast ease-in-out justify-start ${location.pathname.startsWith(path) ? 'bg-primary/20 text-primary font-semibold' : 'text-text-secondary hover:bg-surface-2'}`;
@@ -373,7 +386,7 @@ export const TeacherLayout: React.FC = () => {
                     ))}
                 </nav>
                 <div className="shrink-0 p-4 border-t border-border">
-                    <button onClick={() => window.location.href = '/#/login'} className="flex items-center p-3 px-4 gap-4 w-full rounded-lg text-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors group justify-start">
+                    <button onClick={handleLogout} className="flex items-center p-3 px-4 gap-4 w-full rounded-lg text-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors group justify-start">
                         <Power className="h-5 w-5" />
                         <span>Cerrar Sesión</span>
                     </button>
@@ -419,8 +432,14 @@ const directorNavItems = [
 
 export const DirectorLayout: React.FC = () => {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+    };
 
     const navLinkClasses = (path: string) => `group flex items-center p-3 px-4 gap-4 rounded-lg transition-colors duration-fast ease-in-out justify-start ${location.pathname.startsWith(path) ? 'bg-primary/20 text-primary font-semibold' : 'text-text-secondary hover:bg-surface-2'}`;
     const iconClasses = (path: string) => `h-5 w-5 transition-colors flex-shrink-0 ${location.pathname.startsWith(path) ? 'text-primary' : 'text-text-secondary group-hover:text-text-primary'}`;
@@ -445,7 +464,7 @@ export const DirectorLayout: React.FC = () => {
                     ))}
                 </nav>
                 <div className="p-4 border-t border-border">
-                    <button onClick={logout} className="flex items-center p-3 px-4 gap-4 w-full rounded-lg text-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors group justify-start">
+                    <button onClick={handleLogout} className="flex items-center p-3 px-4 gap-4 w-full rounded-lg text-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors group justify-start">
                         <Power className="h-5 w-5" />
                         <span className="font-medium">Cerrar Sesión</span>
                     </button>
@@ -458,7 +477,7 @@ export const DirectorLayout: React.FC = () => {
                     </button>
                     <div className="relative ml-auto flex items-center gap-4">
                         <ThemeToggle />
-                        <ProfileDropdown user={user} onLogout={logout} />
+                        <ProfileDropdown user={user} onLogout={handleLogout} />
                     </div>
                 </header>
                 <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background p-4 sm:p-6 lg:p-8">
@@ -481,9 +500,15 @@ const adminNavItems = [
 ];
 
 export const AdminLayout: React.FC = () => {
-    const { user, logout } = useAuth();
+    const { user, userData, logout } = useAuth();
+    const navigate = useNavigate();
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+    };
 
     const navLinkClasses = (path: string) => `group flex items-center p-3 px-4 gap-4 rounded-lg transition-colors duration-fast ease-in-out justify-start ${location.pathname.startsWith(path) ? 'bg-primary/20 text-primary font-semibold' : 'text-text-secondary hover:bg-surface-2'}`;
     const iconClasses = (path: string) => `h-5 w-5 transition-colors flex-shrink-0 ${location.pathname.startsWith(path) ? 'text-primary' : 'text-text-secondary group-hover:text-text-primary'}`;
@@ -506,7 +531,7 @@ export const AdminLayout: React.FC = () => {
                     ))}
                 </nav>
                  <div className="shrink-0 p-4 border-t border-border">
-                    <button onClick={logout} className="flex items-center p-3 px-4 gap-4 w-full rounded-lg text-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors group justify-start">
+                    <button onClick={handleLogout} className="flex items-center p-3 px-4 gap-4 w-full rounded-lg text-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors group justify-start">
                         <Power className="h-5 w-5" />
                         <span>Cerrar Sesión</span>
                     </button>
@@ -520,9 +545,9 @@ export const AdminLayout: React.FC = () => {
                     <div className="relative ml-auto flex items-center gap-4">
                         <ThemeToggle />
                         <div className="flex items-center gap-3">
-                            <span className="font-semibold text-text-primary hidden sm:block">{user?.name}</span>
+                            <span className="font-semibold text-text-primary hidden sm:block">{userData?.nombre || 'Admin'}</span>
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent-a flex items-center justify-center font-bold text-white ring-2 ring-surface-2">
-                                {user?.name?.charAt(0)}
+                                {userData?.nombre?.charAt(0) || 'A'}
                             </div>
                         </div>
                     </div>

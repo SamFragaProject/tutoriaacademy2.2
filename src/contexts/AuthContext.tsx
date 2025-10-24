@@ -236,8 +236,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUserData(null);
+    console.log('🚪 Cerrando sesión...');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('❌ Error al cerrar sesión:', error);
+      } else {
+        console.log('✅ Sesión cerrada exitosamente');
+      }
+    } catch (err) {
+      console.error('❌ Error crítico en signOut:', err);
+    } finally {
+      // Limpiar estado local siempre, incluso si falla
+      setUser(null);
+      setSession(null);
+      setUserData(null);
+      console.log('🧹 Estado local limpiado');
+    }
   };
 
   const value: AuthContextType = {
