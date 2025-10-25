@@ -654,7 +654,110 @@ export const ScreeningPage: React.FC = () => {
  * Página de Calificaciones - Sistema completo de calificación
  */
 export const GradingPage: React.FC = () => {
-    return <GradingInterface />;
+    const filtros = [
+        { label: 'Pendientes', variant: 'primary' as const },
+        { label: 'Revisadas', variant: 'secondary' as const },
+        { label: 'Atención', variant: 'warning' as const },
+        { label: 'Por Grupo', variant: 'default' as const },
+    ];
+
+    const pendientes = [
+        { title: 'Examen Álgebra - Grupo 2B', subtitle: '15 sin calificar • hace 2h', status: 'Pendiente' },
+        { title: 'Tarea Física - Grupo 1A', subtitle: '8 sin calificar • hace 5h', status: 'Pendiente' },
+        { title: 'Quiz Historia - Grupo 3C', subtitle: 'Revisión parcial • hace 1d', status: 'En revisión' },
+        { title: 'Proyecto Ciencias - 2A', subtitle: 'Completado • hace 3d', status: 'Revisado' },
+    ];
+
+    const notas = [
+        { name: '5', count: 2 },
+        { name: '6', count: 8 },
+        { name: '7', count: 14 },
+        { name: '8', count: 10 },
+        { name: '9', count: 6 },
+        { name: '10', count: 3 },
+    ];
+
+    return (
+        <div>
+            <div style={{ marginBottom: 24 }}>
+                <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--ne-text)', letterSpacing: '-0.02em' }}>Calificaciones</h1>
+                <p style={{ color: 'var(--ne-text-secondary)' }}>Gestiona pendientes, distribuciones y promedios por grupo</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+                {filtros.map((f, i) => (
+                    <Chip key={i} label={f.label} variant={f.variant} />
+                ))}
+            </div>
+
+            <div className="ne-grid">
+                {/* Pendientes de calificar */}
+                <div className="ne-col-8 ne-animate-in">
+                    <div className="ne-card">
+                        <div className="ne-card-header">
+                            <h3 className="ne-card-title">Pendientes de Calificar</h3>
+                        </div>
+                        <div className="ne-card-body">
+                            <div className="ne-list">
+                                {pendientes.map((p, i) => (
+                                    <div key={i} className="ne-list-item">
+                                        <div className="ne-list-icon"/>
+                                        <div className="ne-list-content">
+                                            <div className="ne-list-title">{p.title}</div>
+                                            <div className="ne-list-subtitle">{p.subtitle}</div>
+                                        </div>
+                                        <span style={{ fontSize: 12, fontWeight: 600, color: p.status === 'Revisado' ? 'var(--ne-success)' : p.status === 'En revisión' ? 'var(--ne-warning)' : 'var(--ne-danger)' }}>
+                                            {p.status}
+                                        </span>
+                                        <button className="ne-btn-secondary" style={{ marginLeft: 12 }}>Calificar</button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Widgets derecha */}
+                <div className="ne-col-4 ne-animate-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                    <div className="ne-card">
+                        <div className="ne-card-header">
+                            <h3 className="ne-card-title">Distribución de Notas</h3>
+                        </div>
+                        <div className="ne-card-body">
+                            <div style={{ height: 180 }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <RBarChart data={notas} barCategoryGap={18}>
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} style={{ fontSize: 12, fill: 'var(--ne-text-secondary)' }} />
+                                        <Tooltip cursor={{ fill: 'rgba(111,91,255,0.08)' }} />
+                                        <Bar dataKey="count" fill="#B9C3FF" radius={[8,8,8,8]} />
+                                    </RBarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="ne-card">
+                        <div className="ne-card-header">
+                            <h3 className="ne-card-title">Promedio por Grupo</h3>
+                        </div>
+                        <div className="ne-card-body">
+                            <div className="ne-list">
+                                {[{g:'1A',p:8.4},{g:'2B',p:8.1},{g:'3C',p:7.6}].map((r)=> (
+                                    <div key={r.g} className="ne-list-item">
+                                        <div className="ne-list-content">
+                                            <div className="ne-list-title">Grupo {r.g}</div>
+                                            <div className="ne-list-subtitle">Promedio actual</div>
+                                        </div>
+                                        <div style={{ fontWeight: 700, color: 'var(--ne-text)' }}>{r.p}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 /**

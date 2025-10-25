@@ -58,7 +58,7 @@ const AppContent: React.FC = () => {
         <Route path="/setup" element={<OnboardingB2BPage />} />
 
         {/* Student Pages */}
-        <Route path="/app" element={<ProtectedRoute><StudentLayout /></ProtectedRoute>}>
+        <Route path="/app" element={<ProtectedRoute requiredRole="alumno"><StudentLayout /></ProtectedRoute>}>
           <Route path="onboarding" element={<OnboardingPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="materias" element={<SubjectsPage />} />
@@ -80,7 +80,7 @@ const AppContent: React.FC = () => {
         </Route>
 
         {/* Teacher Pages */}
-        <Route path="/docente" element={<ProtectedRoute><ErrorBoundary><TeacherLayout /></ErrorBoundary></ProtectedRoute>}>
+        <Route path="/docente" element={<ProtectedRoute requiredRole="profesor"><ErrorBoundary><TeacherLayout /></ErrorBoundary></ProtectedRoute>}>
           <Route path="dashboard" element={<ErrorBoundary><TeacherDashboardPage /></ErrorBoundary>} />
           <Route path="grupos" element={<GroupsPage />} />
           <Route path="banco-preguntas" element={<QuestionBankPage />} />
@@ -96,26 +96,27 @@ const AppContent: React.FC = () => {
         </Route>
         
         {/* Director Pages */}
-        <Route path="/director" element={<ProtectedRoute><DirectorLayout /></ProtectedRoute>}>
+                {/* Director Pages */}
+        <Route path="/director" element={<ProtectedRoute requiredRole="director"><DirectorLayout /></ProtectedRoute>}>
             <Route path="dashboard" element={<DirectorDashboardPage />} />
             <Route path="escuela" element={<SchoolManagementPage />} />
-            <Route path="docentes" element={<TeachersPage />} />
-            <Route path="alumnos" element={<StudentsPage />} />
+            <Route path="profesores" element={<TeachersPage />} />
+            <Route path="estudiantes" element={<StudentsPage />} />
             <Route path="analisis" element={<AcademicAnalysisPage />} />
             <Route path="suscripcion" element={<SubscriptionPage />} />
             <Route index element={<Navigate to="dashboard" />} />
         </Route>
-        
+
         {/* Admin Pages */}
-        <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
-            <Route path="dashboard" element={<AdminHomePage />} />
+        <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminLayout /></ProtectedRoute>}>
+            <Route path="inicio" element={<AdminHomePage />} />
             <Route path="usuarios" element={<UsersPage />} />
             <Route path="documentos" element={<DocumentsPage />} />
             <Route path="tutores" element={<TutorsPage />} />
             <Route path="metricas" element={<MetricsPage />} />
-            <Route path="emails" element={<EmailsPage />} />
+            <Route path="correos" element={<EmailsPage />} />
             <Route path="apis" element={<ApisPage />} />
-            <Route index element={<Navigate to="dashboard" />} />
+            <Route index element={<Navigate to="inicio" />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" />} />

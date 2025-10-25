@@ -136,6 +136,8 @@
 
 - **[Arquitectura Técnica](./ARCHITECTURE.md)** - Detalles de la arquitectura del sistema
 - **[Sistema de Screening](./docs/SCREENING_SYSTEM.md)** - Documentación del sistema de detección
+- **[Manual del Usuario — Profesor](./docs/MANUAL_PROFESOR.md)** - Operación diaria del rol Profesor (Supabase + Vercel)
+- **[Estado de Implementación](./docs/IMPLEMENTATION_STATUS.md)** - Mapa completo de features: qué está listo, parcial o falta
 - **API Documentation** - (Próximamente)
 
 ---

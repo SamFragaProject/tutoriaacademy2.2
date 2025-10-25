@@ -3,11 +3,22 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Loader from './Loader';
 
-export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading: authLoading } = useAuth();
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requiredRole?: 'alumno' | 'profesor' | 'director' | 'admin';
+}
+
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
+  const { user, userData, loading: authLoading } = useAuth();
   const location = useLocation();
 
-  console.log('🔐 ProtectedRoute check:', { user: !!user, authLoading, path: location.pathname });
+  console.log('🔐 ProtectedRoute check:', { 
+    user: !!user, 
+    authLoading, 
+    path: location.pathname, 
+    requiredRole, 
+    userRole: userData?.rol 
+  });
 
   if (authLoading) {
     console.log('🔐 ProtectedRoute: Mostrando loader (authLoading=true)');
@@ -26,6 +37,18 @@ export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ childr
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  console.log('🔐 ProtectedRoute: User autenticado, renderizando children');
+  // Role check: if a requiredRole is specified, verify userData.rol matches
+  if (requiredRole && userData?.rol !== requiredRole) {
+    console.warn(`🔐 ProtectedRoute: Role mismatch. Required: ${requiredRole}, User: ${userData?.rol}`);
+    // Redirect to appropriate dashboard for their actual role
+    const redirectPath = 
+      userData?.rol === 'profesor' ? '/docente/dashboard' :
+      userData?.rol === 'director' ? '/director/dashboard' :
+      userData?.rol === 'admin' ? '/admin/inicio' :
+      '/app/dashboard';
+    return <Navigate to={redirectPath} replace />;
+  }
+
+  console.log('🔐 ProtectedRoute: User autenticado y rol verificado, renderizando children');
   return <>{children}</>;
 };
