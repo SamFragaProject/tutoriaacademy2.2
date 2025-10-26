@@ -1,10 +1,9 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, School, FileText, BookOpen, TrendingUp, Activity } from 'lucide-react';
+import { Users, School, FileText, BookOpen, TrendingUp, Activity, Loader2 } from 'lucide-react';
 import { AdminKpiCard } from '../../src/components/admin/AdminKpiCard';
-import { Card } from '../components/ui/card';
-import { getSystemStats, getActivityLogs, type ActivityLog } from '../src/services/admin/adminAnalytics';
-import { Loader2 } from 'lucide-react';
+import { Card } from '../../components/ui/card';
+import { getSystemStats, getActivityLogs, type ActivityLog } from '../../src/services/admin/adminAnalytics';
 
 export const AdminDashboardPage: React.FC = () => {
   const [stats, setStats] = useState({
