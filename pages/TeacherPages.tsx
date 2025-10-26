@@ -26,6 +26,7 @@ import { ExamCreatorSimple } from '../components/teacher/ExamCreatorSimple';
 import { EnhancedExamCreatorTest } from '../components/teacher/EnhancedExamCreatorTest';
 import { TaskManager } from '../components/teacher/TaskManager';
 import { CommunicationHub } from '../components/teacher/CommunicationHub';
+import { ContentList } from '../components/teacher/ContentList';
 import { SimpleTeacherDashboard } from './SimpleTeacherDashboard';
 import '../styles/neo-glass.css';
 
@@ -779,4 +780,11 @@ export const TaskManagerPage: React.FC = () => {
  */
 export const CommunicationHubPage: React.FC = () => {
     return <CommunicationHub />;
+};
+
+/**
+ * Página de Gestión de Contenido (CMS)
+ */
+export const ContentManagementPage: React.FC = () => {
+    return <ContentList />;
 };

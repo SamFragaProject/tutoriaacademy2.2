@@ -6,9 +6,11 @@ import { PublicLayout, StudentLayout, TeacherLayout, DirectorLayout, AdminLayout
 import { HomePage, BlogIndexPage, BlogPostPage, HelpPage, LegalPage } from './pages/PublicPages';
 import { LoginPage } from './src/pages/LoginPage';
 import { DashboardPage, SubjectsPage, SyllabusPage, AgendaPage, StatisticsPage, TutorPage, DiagnosisPage, PracticesPage, SimulacroPage, RankingPage, ConfigurationPage, GamesPage, GeneratingPlanPage, OnboardingPage, LibraryPage, ExamPage } from './pages/StudentPages';
-import { TeacherDashboardPage, GroupsPage, QuestionBankPage, TeacherExamsPage, TeacherResultsPage, TutorCopilotPage, ScreeningPage, GradingPage, AIExamCreatorPage, TaskManagerPage, CommunicationHubPage } from './pages/TeacherPages';
+import { TeacherDashboardPage, GroupsPage, QuestionBankPage, TeacherExamsPage, TeacherResultsPage, TutorCopilotPage, ScreeningPage, GradingPage, AIExamCreatorPage, TaskManagerPage, CommunicationHubPage, ContentManagementPage } from './pages/TeacherPages';
 import { DirectorDashboardPage, SchoolManagementPage, TeachersPage, AcademicAnalysisPage, SubscriptionPage, StudentsPage } from './pages/DirectorPages';
 import { AdminHomePage, UsersPage, DocumentsPage, TutorsPage, MetricsPage, EmailsPage, ApisPage } from './pages/AdminPages';
+// Nuevas páginas admin con Supabase
+import { AdminDashboardPage, AdminUsersPage, AdminSchoolsPage } from './pages/admin';
 import { useAuth } from './hooks/useAuth';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ToastContainer, useToast } from './components/Toast';
@@ -92,6 +94,7 @@ const AppContent: React.FC = () => {
           <Route path="crear-examen-ia" element={<AIExamCreatorPage />} />
           <Route path="tareas" element={<TaskManagerPage />} />
           <Route path="comunicacion" element={<CommunicationHubPage />} />
+          <Route path="contenido" element={<ContentManagementPage />} />
           <Route index element={<Navigate to="dashboard" />} />
         </Route>
         
@@ -110,6 +113,11 @@ const AppContent: React.FC = () => {
         {/* Admin Pages */}
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminLayout /></ProtectedRoute>}>
             <Route path="inicio" element={<AdminHomePage />} />
+            {/* Nuevas páginas admin con Supabase */}
+            <Route path="dashboard" element={<AdminDashboardPage />} />
+            <Route path="usuarios-new" element={<AdminUsersPage />} />
+            <Route path="escuelas" element={<AdminSchoolsPage />} />
+            {/* Páginas admin antiguas */}
             <Route path="usuarios" element={<UsersPage />} />
             <Route path="documentos" element={<DocumentsPage />} />
             <Route path="tutores" element={<TutorsPage />} />
