@@ -1,5 +1,4 @@
-// Usar cliente dev que bypasea RLS en desarrollo
-import { supabaseDev as supabase } from '../../src/lib/supabase-dev';
+import { supabase } from '../../src/lib/supabase';
 
 export interface TeacherGroup {
   id: string;
