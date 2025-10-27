@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export function LoginPage() {
@@ -163,14 +163,14 @@ export function LoginPage() {
 
           {/* Enlaces adicionales */}
           <div className="mt-6 text-center space-y-2">
-            <a href="#" className="text-sm text-blue-600 hover:underline block">
+            <Link to="/forgot-password" className="text-sm text-blue-600 hover:underline block">
               ¿Olvidaste tu contraseña?
-            </a>
+            </Link>
             <p className="text-sm text-gray-600">
               ¿No tienes cuenta?{' '}
-              <a href="#" className="text-blue-600 hover:underline font-medium">
-                Contacta a tu escuela
-              </a>
+              <Link to="/register" className="text-blue-600 hover:underline font-medium">
+                Regístrate aquí
+              </Link>
             </p>
           </div>
 

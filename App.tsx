@@ -5,6 +5,8 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PublicLayout, StudentLayout, TeacherLayout, DirectorLayout, AdminLayout } from './components/Layout';
 import { HomePage, BlogIndexPage, BlogPostPage, HelpPage, LegalPage } from './pages/PublicPages';
 import { LoginPage } from './src/pages/LoginPage';
+import { RegisterPage } from './src/pages/RegisterPage';
+import { ForgotPasswordPage } from './src/pages/ForgotPasswordPage';
 import { DashboardPage, SubjectsPage, SyllabusPage, AgendaPage, StatisticsPage, TutorPage, DiagnosisPage, PracticesPage, SimulacroPage, RankingPage, ConfigurationPage, GamesPage, GeneratingPlanPage, OnboardingPage, LibraryPage, ExamPage } from './pages/StudentPages';
 import { TeacherDashboardPage, GroupsPage, QuestionBankPage, TeacherExamsPage, TeacherResultsPage, TutorCopilotPage, ScreeningPage, GradingPage, AIExamCreatorPage, TaskManagerPage, CommunicationHubPage, ContentManagementPage } from './pages/TeacherPages';
 import { DirectorDashboardPage, SchoolManagementPage, TeachersPage, AcademicAnalysisPage, SubscriptionPage, StudentsPage } from './pages/DirectorPages';
@@ -55,6 +57,8 @@ const AppContent: React.FC = () => {
 
         {/* Auth Pages */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         
         {/* B2B Onboarding */}
         <Route path="/setup" element={<OnboardingB2BPage />} />
