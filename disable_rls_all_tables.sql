@@ -8,6 +8,7 @@
 
 -- Deshabilitar RLS en tablas principales
 ALTER TABLE IF EXISTS usuarios DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS escuelas DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS grupos DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS grupos_alumnos DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS tareas DISABLE ROW LEVEL SECURITY;
@@ -27,7 +28,7 @@ SELECT
 FROM pg_tables 
 WHERE schemaname = 'public' 
 AND tablename IN (
-    'usuarios', 'grupos', 'grupos_alumnos', 'tareas', 'entregas',
+    'usuarios', 'escuelas', 'grupos', 'grupos_alumnos', 'tareas', 'entregas',
     'examenes', 'preguntas', 'resultados_examenes', 'calificaciones',
     'asistencias', 'mensajes'
 )
