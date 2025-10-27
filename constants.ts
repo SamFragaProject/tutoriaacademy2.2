@@ -205,6 +205,51 @@ export const MOCK_TEACHER_GROUPS: Group[] = [
     { id: 'group-102', name: '2do Grado - Grupo C', studentCount: 32, subject: 'Historia' },
 ];
 
+// Estudiantes por grupo
+export const MOCK_GROUP_STUDENTS: Record<string, any[]> = {
+    'group-101': [
+        { id: 's1', name: 'Ana Pérez', email: 'ana.perez@escuela.com', avatar: '👧', promedio: 92, asistencia: 98, xp: 4500 },
+        { id: 's2', name: 'Luis García', email: 'luis.garcia@escuela.com', avatar: '👦', promedio: 85, asistencia: 95, xp: 3800 },
+        { id: 's3', name: 'Carlos Gomez', email: 'carlos.gomez@escuela.com', avatar: '👨', promedio: 88, asistencia: 92, xp: 4100 },
+        { id: 's4', name: 'Sofía Martínez', email: 'sofia.martinez@escuela.com', avatar: '👩', promedio: 94, asistencia: 100, xp: 5200 },
+        { id: 's5', name: 'Diego Hernández', email: 'diego.hernandez@escuela.com', avatar: '🧒', promedio: 78, asistencia: 88, xp: 2900 },
+        { id: 's6', name: 'María López', email: 'maria.lopez@escuela.com', avatar: '👧', promedio: 91, asistencia: 97, xp: 4400 },
+        { id: 's7', name: 'Pedro Sánchez', email: 'pedro.sanchez@escuela.com', avatar: '👦', promedio: 82, asistencia: 90, xp: 3500 },
+        { id: 's8', name: 'Laura Ramírez', email: 'laura.ramirez@escuela.com', avatar: '👩', promedio: 96, asistencia: 100, xp: 5800 },
+        { id: 's9', name: 'Roberto Torres', email: 'roberto.torres@escuela.com', avatar: '🧑', promedio: 75, asistencia: 85, xp: 2600 },
+        { id: 's10', name: 'Carmen Flores', email: 'carmen.flores@escuela.com', avatar: '👧', promedio: 89, asistencia: 94, xp: 4000 },
+        { id: 's11', name: 'Jorge Morales', email: 'jorge.morales@escuela.com', avatar: '👦', promedio: 84, asistencia: 91, xp: 3700 },
+        { id: 's12', name: 'Patricia Vargas', email: 'patricia.vargas@escuela.com', avatar: '👩', promedio: 93, asistencia: 99, xp: 4900 },
+        { id: 's13', name: 'Fernando Castro', email: 'fernando.castro@escuela.com', avatar: '🧒', promedio: 77, asistencia: 87, xp: 2800 },
+        { id: 's14', name: 'Andrea Ruiz', email: 'andrea.ruiz@escuela.com', avatar: '👧', promedio: 90, asistencia: 96, xp: 4300 },
+        { id: 's15', name: 'Miguel Ortiz', email: 'miguel.ortiz@escuela.com', avatar: '👦', promedio: 86, asistencia: 93, xp: 3900 },
+    ],
+    'group-103': [
+        { id: 's16', name: 'Valentina Cruz', email: 'valentina.cruz@escuela.com', avatar: '👩', promedio: 95, asistencia: 98, xp: 5100 },
+        { id: 's17', name: 'Santiago Díaz', email: 'santiago.diaz@escuela.com', avatar: '🧑', promedio: 87, asistencia: 92, xp: 3800 },
+        { id: 's18', name: 'Isabella Reyes', email: 'isabella.reyes@escuela.com', avatar: '👧', promedio: 91, asistencia: 97, xp: 4500 },
+        { id: 's19', name: 'Mateo Silva', email: 'mateo.silva@escuela.com', avatar: '👦', promedio: 83, asistencia: 89, xp: 3400 },
+        { id: 's20', name: 'Camila Mendoza', email: 'camila.mendoza@escuela.com', avatar: '👩', promedio: 94, asistencia: 99, xp: 4900 },
+        { id: 's21', name: 'Sebastián Rojas', email: 'sebastian.rojas@escuela.com', avatar: '🧒', promedio: 79, asistencia: 86, xp: 3000 },
+        { id: 's22', name: 'Lucía Jiménez', email: 'lucia.jimenez@escuela.com', avatar: '👧', promedio: 92, asistencia: 98, xp: 4600 },
+        { id: 's23', name: 'Daniel Navarro', email: 'daniel.navarro@escuela.com', avatar: '👦', promedio: 85, asistencia: 91, xp: 3700 },
+        { id: 's24', name: 'Emma Gutiérrez', email: 'emma.gutierrez@escuela.com', avatar: '👩', promedio: 96, asistencia: 100, xp: 5500 },
+        { id: 's25', name: 'Alejandro Campos', email: 'alejandro.campos@escuela.com', avatar: '🧑', promedio: 81, asistencia: 88, xp: 3200 },
+    ],
+    'group-102': [
+        { id: 's26', name: 'Martina Luna', email: 'martina.luna@escuela.com', avatar: '👧', promedio: 93, asistencia: 97, xp: 4800 },
+        { id: 's27', name: 'Nicolás Vega', email: 'nicolas.vega@escuela.com', avatar: '👦', promedio: 88, asistencia: 93, xp: 4000 },
+        { id: 's28', name: 'Sofía Herrera', email: 'sofia.herrera@escuela.com', avatar: '👩', promedio: 90, asistencia: 95, xp: 4300 },
+        { id: 's29', name: 'Joaquín Paredes', email: 'joaquin.paredes@escuela.com', avatar: '🧒', promedio: 76, asistencia: 84, xp: 2700 },
+        { id: 's30', name: 'Valeria Aguilar', email: 'valeria.aguilar@escuela.com', avatar: '👧', promedio: 94, asistencia: 99, xp: 5000 },
+        { id: 's31', name: 'Gabriel Ramos', email: 'gabriel.ramos@escuela.com', avatar: '👦', promedio: 82, asistencia: 90, xp: 3500 },
+        { id: 's32', name: 'Renata Méndez', email: 'renata.mendez@escuela.com', avatar: '👩', promedio: 91, asistencia: 96, xp: 4400 },
+        { id: 's33', name: 'Emilio Soto', email: 'emilio.soto@escuela.com', avatar: '🧑', promedio: 84, asistencia: 91, xp: 3600 },
+        { id: 's34', name: 'Victoria Peña', email: 'victoria.pena@escuela.com', avatar: '👧', promedio: 95, asistencia: 100, xp: 5300 },
+        { id: 's35', name: 'Maximiliano Cortés', email: 'maximiliano.cortes@escuela.com', avatar: '👦', promedio: 80, asistencia: 87, xp: 3100 },
+    ],
+};
+
 export const MOCK_HEATMAP_DATA: SubtopicResult[] = [
     { 
         subtopic: 'Ecuaciones de 1er Grado', 

@@ -9,6 +9,7 @@ import { RegisterPage } from './src/pages/RegisterPage';
 import { ForgotPasswordPage } from './src/pages/ForgotPasswordPage';
 import { DashboardPage, SubjectsPage, SyllabusPage, AgendaPage, StatisticsPage, TutorPage, DiagnosisPage, PracticesPage, SimulacroPage, RankingPage, ConfigurationPage, GamesPage, GeneratingPlanPage, OnboardingPage, LibraryPage, ExamPage } from './pages/StudentPages';
 import { TeacherDashboardPage, GroupsPage, QuestionBankPage, TeacherExamsPage, TeacherResultsPage, TutorCopilotPage, ScreeningPage, GradingPage, AIExamCreatorPage, TaskManagerPage, CommunicationHubPage, ContentManagementPage } from './pages/TeacherPages';
+import { GroupDetailPage } from './pages/GroupDetailPage';
 import { DirectorDashboardPage, SchoolManagementPage, TeachersPage, AcademicAnalysisPage, SubscriptionPage, StudentsPage } from './pages/DirectorPages';
 import { AdminHomePage, UsersPage, DocumentsPage, TutorsPage, MetricsPage, EmailsPage, ApisPage } from './pages/AdminPages';
 // Nuevas páginas admin con Supabase
@@ -89,6 +90,7 @@ const AppContent: React.FC = () => {
         <Route path="/docente" element={<ProtectedRoute requiredRole="profesor"><ErrorBoundary><TeacherLayout /></ErrorBoundary></ProtectedRoute>}>
           <Route path="dashboard" element={<ErrorBoundary><TeacherDashboardPage /></ErrorBoundary>} />
           <Route path="grupos" element={<GroupsPage />} />
+          <Route path="grupos/:groupId" element={<GroupDetailPage />} />
           <Route path="banco-preguntas" element={<QuestionBankPage />} />
           <Route path="examenes" element={<TeacherExamsPage />} />
           <Route path="calificaciones" element={<GradingPage />} />

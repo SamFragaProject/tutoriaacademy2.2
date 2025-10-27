@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/card';
 import { Chip } from '../components/ui/chip';
 import { PrimaryButton, SecondaryButton, ProgressBar } from '../components/ui';
@@ -275,45 +276,52 @@ export const TeacherDashboardPage: React.FC = () => {
     );
 };
 
-export const GroupsPage: React.FC = () => (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <PageHeader title="Mis Grupos" subtitle="Gestiona tus grupos y alumnos." />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {MOCK_TEACHER_GROUPS.map((group, index) => (
-                <motion.div
-                    key={group.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ y: -8, scale: 1.02 }}
-                >
-                    <Card className="border-2 hover:border-primary/50 transition-all bg-gradient-to-br from-purple-500/5 to-blue-500/5 relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <div className="relative">
-                            <div className="flex items-start justify-between mb-3">
-                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg">
-                                    <BookCopy className="w-6 h-6 text-white" />
+export const GroupsPage: React.FC = () => {
+    const navigate = useNavigate();
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <PageHeader title="Mis Grupos" subtitle="Gestiona tus grupos y alumnos." />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {MOCK_TEACHER_GROUPS.map((group, index) => (
+                    <motion.div
+                        key={group.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={{ y: -8, scale: 1.02 }}
+                    >
+                        <Card className="border-2 hover:border-primary/50 transition-all bg-gradient-to-br from-purple-500/5 to-blue-500/5 relative overflow-hidden group cursor-pointer">
+                            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <div className="relative">
+                                <div className="flex items-start justify-between mb-3">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg">
+                                        <BookCopy className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div className="px-3 py-1 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30">
+                                        <span className="text-xs font-bold text-green-600 dark:text-green-400">
+                                            {group.studentCount} alumnos
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="px-3 py-1 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30">
-                                    <span className="text-xs font-bold text-green-600 dark:text-green-400">
-                                        {group.studentCount} alumnos
-                                    </span>
+                                <h3 className="text-xl font-black text-text-primary mb-1">{group.name}</h3>
+                                <p className="text-text-secondary font-semibold">{group.subject}</p>
+                                <div className="mt-4 pt-4 border-t border-border">
+                                    <SecondaryButton 
+                                        className="w-full"
+                                        onClick={() => navigate(`/docente/grupos/${group.id}`)}
+                                    >
+                                        Ver Detalles
+                                    </SecondaryButton>
                                 </div>
                             </div>
-                            <h3 className="text-xl font-black text-text-primary mb-1">{group.name}</h3>
-                            <p className="text-text-secondary font-semibold">{group.subject}</p>
-                            <div className="mt-4 pt-4 border-t border-border">
-                                <SecondaryButton className="w-full">
-                                    Ver Detalles
-                                </SecondaryButton>
-                            </div>
-                        </div>
-                    </Card>
-                </motion.div>
-            ))}
-        </div>
-    </motion.div>
-);
+                        </Card>
+                    </motion.div>
+                ))}
+            </div>
+        </motion.div>
+    );
+};
 
 export const QuestionBankPage: React.FC = () => {
     const [selectedSubject, setSelectedSubject] = useState('Matemáticas');

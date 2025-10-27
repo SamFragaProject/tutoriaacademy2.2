@@ -18,18 +18,21 @@ export interface TeacherGroup {
  */
 export async function fetchTeacherGroups(profesorId: string): Promise<TeacherGroup[]> {
   try {
-    // 1. Obtener grupos del profesor
+    console.log('Fetching groups for profesor:', profesorId);
+    
+    // 1. Obtener grupos del profesor (sin filtrar por activo, ya que puede ser NULL)
     const { data: grupos, error: gruposError } = await supabase
       .from('grupos')
-      .select('id, nombre, materia, nivel, descripcion, codigo_acceso')
+      .select('id, nombre, materia, nivel, descripcion, codigo_acceso, activo')
       .eq('profesor_id', profesorId)
-      .eq('activo', true)
       .order('nombre');
 
     if (gruposError) {
       console.error('Error fetching grupos:', gruposError);
       throw gruposError;
     }
+    
+    console.log('Groups fetched:', grupos);
 
     if (!grupos || grupos.length === 0) {
       return [];
