@@ -348,7 +348,6 @@ export const StudentLayout: React.FC = () => {
 // TEACHER LAYOUT
 const teacherNavItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/docente/dashboard' },
-    { icon: Play, label: 'Inicio Rápido', path: '/docente/grupos' },
     { icon: UsersRound, label: 'Mis Grupos', path: '/docente/grupos' },
     { icon: BrainCircuit, label: 'Copiloto IA', path: '/docente/copiloto' },
     { icon: FileText, label: 'Banco de Preguntas', path: '/docente/banco-preguntas' },

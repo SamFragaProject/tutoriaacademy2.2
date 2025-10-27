@@ -14,8 +14,15 @@ console.log('🔧 Supabase Client Config:', {
   hasKey: !!supabaseKey,
   usingServiceRole,
   bypassRLS: usingServiceRole,
+  serviceRoleKeyLength: supabaseServiceRoleKey?.length,
   url: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'MISSING',
 });
+
+if (usingServiceRole) {
+  console.log('✅ ✅ ✅ USANDO SERVICE ROLE KEY - RLS BYPASSEADO ✅ ✅ ✅');
+} else {
+  console.warn('⚠️ ⚠️ ⚠️ USANDO ANON KEY - RLS ACTIVO ⚠️ ⚠️ ⚠️');
+}
 
 if (!supabaseUrl || !supabaseKey) {
   const error = new Error(
