@@ -3,7 +3,7 @@
  * Genera heatmaps, KPIs y estadísticas de rendimiento
  */
 
-import { supabase } from ''../../lib/supabase'';
+import { supabase } from '../../lib/supabase';
 
 export interface HeatmapCell {
     studentName: string;
@@ -83,7 +83,7 @@ export async function fetchHeatmapData(grupoId: string): Promise<SubtopicResult[
                     : 0;
 
                 return {
-                    studentName: `${usuario.nombre} ${usuario.apellidos || ''}`.trim(),
+                    studentName: `${usuario.nombre} ${usuario.apellidos || '}`.trim(),
                     score: Math.round(avgScore)
                 };
             });
@@ -275,3 +275,4 @@ export async function fetchLowPerformanceSubtopics(grupoId: string, threshold: n
         return [];
     }
 }
+

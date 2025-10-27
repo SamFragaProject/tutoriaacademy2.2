@@ -3,7 +3,7 @@
  * Gestión de grupos, alumnos y estadísticas
  */
 
-import { supabase } from ''../../lib/supabase'';
+import { supabase } from '../../lib/supabase';
 
 export interface Grupo {
     id: string;
@@ -258,3 +258,4 @@ export async function removeStudentFromGroup(grupoId: string, alumnoId: string) 
         throw error;
     }
 }
+
