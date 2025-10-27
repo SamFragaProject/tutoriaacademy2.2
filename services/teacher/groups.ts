@@ -4,9 +4,9 @@ export interface TeacherGroup {
   id: string;
   nombre: string;
   materia: string;
-  nivel: string;
+  grado?: string;
+  seccion?: string;
   descripcion: string;
-  codigo_acceso: string;
   total_alumnos: number;
   promedio_general: number;
   tasa_asistencia: number;
@@ -33,7 +33,7 @@ export async function fetchTeacherGroups(profesorId: string): Promise<TeacherGro
     // 1. Obtener grupos del profesor (sin filtrar por activo, ya que puede ser NULL)
     const { data: grupos, error: gruposError } = await supabase
       .from('grupos')
-      .select('id, nombre, materia, nivel, descripcion, codigo_acceso, activo')
+      .select('id, nombre, materia, grado, seccion, descripcion, activo')
       .eq('profesor_id', profesorId)
       .order('nombre');
 
