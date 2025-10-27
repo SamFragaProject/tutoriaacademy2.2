@@ -13,7 +13,7 @@ import { GroupDetailPage } from './pages/GroupDetailPage';
 import { DirectorDashboardPage, SchoolManagementPage, TeachersPage, AcademicAnalysisPage, SubscriptionPage, StudentsPage } from './pages/DirectorPages';
 import { AdminHomePage, UsersPage, DocumentsPage, TutorsPage, MetricsPage, EmailsPage, ApisPage } from './pages/AdminPages';
 // Nuevas páginas admin con Supabase
-import { AdminDashboardPage, AdminUsersPage, AdminSchoolsPage } from './pages/admin';
+import { AdminDashboard, AdminUsers, AdminSchools, AdminGroups } from './src/pages/admin';
 import { useAuth } from './hooks/useAuth';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ToastContainer, useToast } from './components/Toast';
@@ -120,17 +120,18 @@ const AppContent: React.FC = () => {
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminLayout /></ProtectedRoute>}>
             <Route path="inicio" element={<AdminHomePage />} />
             {/* Nuevas páginas admin con Supabase */}
-            <Route path="dashboard" element={<AdminDashboardPage />} />
-            <Route path="usuarios-new" element={<AdminUsersPage />} />
-            <Route path="escuelas" element={<AdminSchoolsPage />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="usuarios" element={<AdminUsers />} />
+            <Route path="escuelas" element={<AdminSchools />} />
+            <Route path="grupos" element={<AdminGroups />} />
             {/* Páginas admin antiguas */}
-            <Route path="usuarios" element={<UsersPage />} />
+            <Route path="usuarios-old" element={<UsersPage />} />
             <Route path="documentos" element={<DocumentsPage />} />
             <Route path="tutores" element={<TutorsPage />} />
             <Route path="metricas" element={<MetricsPage />} />
             <Route path="correos" element={<EmailsPage />} />
             <Route path="apis" element={<ApisPage />} />
-            <Route index element={<Navigate to="inicio" />} />
+            <Route index element={<Navigate to="dashboard" />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" />} />
