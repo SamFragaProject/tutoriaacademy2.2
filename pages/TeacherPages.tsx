@@ -27,6 +27,7 @@ import { EnhancedExamCreator } from '../components/teacher/EnhancedExamCreator';
 import { ExamCreatorSimple } from '../components/teacher/ExamCreatorSimple';
 import { EnhancedExamCreatorTest } from '../components/teacher/EnhancedExamCreatorTest';
 import { TaskManager } from '../components/teacher/TaskManager';
+import TasksManager from '../components/teacher/TasksManager';
 import { CommunicationHub } from '../components/teacher/CommunicationHub';
 import { ContentList } from '../components/teacher/ContentList';
 import { SimpleTeacherDashboard } from './SimpleTeacherDashboard';
@@ -865,7 +866,7 @@ export const AIExamCreatorPage: React.FC = () => {
  * Página de Gestión de Tareas
  */
 export const TaskManagerPage: React.FC = () => {
-    return <TaskManager />;
+    return <TasksManager />;
 };
 
 /**
