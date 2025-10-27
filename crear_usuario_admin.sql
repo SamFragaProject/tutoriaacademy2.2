@@ -20,11 +20,11 @@ ALTER TABLE IF EXISTS mensajes DISABLE ROW LEVEL SECURITY;
 INSERT INTO usuarios (
     id,
     nombre,
-    apellido,
+    apellidos,
     email,
     rol,
     activo,
-    created_at
+    fecha_creacion
 ) VALUES (
     gen_random_uuid(),
     'Admin',
@@ -37,7 +37,7 @@ INSERT INTO usuarios (
 SET rol = 'admin', activo = true;
 
 -- PASO 3: VERIFICAR QUE SE CREÓ
-SELECT id, nombre, apellido, email, rol, activo 
+SELECT id, nombre, apellidos, email, rol, activo 
 FROM usuarios 
 WHERE email = 'admin@tutoria.com';
 
