@@ -11,7 +11,8 @@ import {
   UserPlus,
   Activity,
   BarChart3,
-  Loader2
+  Loader2,
+  Zap
 } from 'lucide-react';
 import { fetchAdminStats } from '../../../services/admin';
 
@@ -109,6 +110,17 @@ export default function AdminDashboard() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Panel de Administración</h1>
         <p className="text-gray-600">Gestión completa del sistema TutoriA Academy</p>
+      </div>
+
+      {/* Botón Inicio Rápido */}
+      <div className="mb-8">
+        <button
+          onClick={() => navigate('/admin/usuarios')}
+          className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-3 font-semibold text-lg group"
+        >
+          <Zap className="w-6 h-6 group-hover:scale-110 transition-transform" />
+          <span>Inicio Rápido - Gestionar Usuarios</span>
+        </button>
       </div>
 
       {/* KPI Cards Grid */}
