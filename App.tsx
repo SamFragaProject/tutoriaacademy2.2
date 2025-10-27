@@ -10,6 +10,7 @@ import { ForgotPasswordPage } from './src/pages/ForgotPasswordPage';
 import { DashboardPage, SubjectsPage, SyllabusPage, AgendaPage, StatisticsPage, TutorPage, DiagnosisPage, PracticesPage, SimulacroPage, RankingPage, ConfigurationPage, GamesPage, GeneratingPlanPage, OnboardingPage, LibraryPage, ExamPage } from './pages/StudentPages';
 import { TeacherDashboardPage, GroupsPage, QuestionBankPage, TeacherExamsPage, TeacherResultsPage, TutorCopilotPage, ScreeningPage, GradingPage, AIExamCreatorPage, TaskManagerPage, CommunicationHubPage, ContentManagementPage } from './pages/TeacherPages';
 import TaskForm from './components/teacher/TaskForm';
+import TaskDetail from './components/teacher/TaskDetail';
 import { GroupDetailPage } from './pages/GroupDetailPage';
 import { DirectorDashboardPage, SchoolManagementPage, TeachersPage, AcademicAnalysisPage, SubscriptionPage, StudentsPage } from './pages/DirectorPages';
 import { AdminHomePage, UsersPage, DocumentsPage, TutorsPage, MetricsPage, EmailsPage, ApisPage } from './pages/AdminPages';
@@ -101,6 +102,7 @@ const AppContent: React.FC = () => {
           <Route path="crear-examen-ia" element={<AIExamCreatorPage />} />
           <Route path="tareas" element={<TaskManagerPage />} />
           <Route path="tareas/crear" element={<TaskForm />} />
+          <Route path="tareas/:taskId" element={<TaskDetail />} />
           <Route path="tareas/:taskId/editar" element={<TaskForm />} />
           <Route path="comunicacion" element={<CommunicationHubPage />} />
           <Route path="contenido" element={<ContentManagementPage />} />
