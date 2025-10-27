@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import { 
     ArrowLeft, Users, BookOpen, ClipboardList, BarChart3, 
     Plus, Mail, Download, Award, TrendingUp, Calendar,
-    CheckCircle2, XCircle, Clock
+    CheckCircle2, XCircle, Clock, Loader2, AlertCircle
 } from 'lucide-react';
 import { Card } from '../components/ui';
-import { MOCK_TEACHER_GROUPS, MOCK_GROUP_STUDENTS } from '../constants';
+import * as teacherService from '../services/teacher';
 
 type TabType = 'estudiantes' | 'tareas' | 'examenes' | 'estadisticas';
 
@@ -16,9 +17,48 @@ export const GroupDetailPage: React.FC = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<TabType>('estudiantes');
 
-    // Buscar grupo
-    const group = MOCK_TEACHER_GROUPS.find(g => g.id === groupId);
-    const students = MOCK_GROUP_STUDENTS[groupId || ''] || [];
+    // Obtener datos del grupo desde Supabase
+    const { data: group, isLoading: loadingGroup, error: errorGroup } = useQuery({
+        queryKey: ['group', groupId],
+        queryFn: () => teacherService.fetchGroupById(groupId || ''),
+        enabled: !!groupId,
+    });
+
+    // Obtener estudiantes del grupo desde Supabase
+    const { data: students = [], isLoading: loadingStudents, error: errorStudents } = useQuery({
+        queryKey: ['group-students', groupId],
+        queryFn: () => teacherService.fetchGroupStudents(groupId || ''),
+        enabled: !!groupId,
+    });
+
+    const isLoading = loadingGroup || loadingStudents;
+    const error = errorGroup || errorStudents;
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-96 gap-4">
+                <Loader2 className="w-16 h-16 text-primary animate-spin" />
+                <p className="text-text-secondary">Cargando grupo...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center h-96 gap-4">
+                <AlertCircle className="w-16 h-16 text-red-500" />
+                <h2 className="text-2xl font-bold text-text-primary">Error al cargar el grupo</h2>
+                <p className="text-text-secondary">{(error as Error).message}</p>
+                <p className="text-sm text-text-secondary mb-4">Asegúrate de haber ejecutado disable_rls_all_tables.sql en Supabase</p>
+                <button
+                    onClick={() => navigate('/docente/grupos')}
+                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition"
+                >
+                    Volver a Grupos
+                </button>
+            </div>
+        );
+    }
 
     if (!group) {
         return (
@@ -36,8 +76,12 @@ export const GroupDetailPage: React.FC = () => {
     }
 
     // Calcular estadísticas
-    const avgPromedio = students.reduce((acc, s) => acc + s.promedio, 0) / students.length || 0;
-    const avgAsistencia = students.reduce((acc, s) => acc + s.asistencia, 0) / students.length || 0;
+    const avgPromedio = students.length > 0 
+        ? students.reduce((acc, s) => acc + s.promedio, 0) / students.length 
+        : 0;
+    const avgAsistencia = students.length > 0 
+        ? students.reduce((acc, s) => acc + s.asistencia, 0) / students.length 
+        : 0;
     const totalXP = students.reduce((acc, s) => acc + s.xp, 0);
 
     const tabs = [
@@ -62,8 +106,8 @@ export const GroupDetailPage: React.FC = () => {
                     <ArrowLeft className="w-6 h-6 text-text-primary" />
                 </button>
                 <div className="flex-1">
-                    <h1 className="text-3xl font-black text-text-primary">{group.name}</h1>
-                    <p className="text-text-secondary">{group.subject} • {students.length} estudiantes</p>
+                    <h1 className="text-3xl font-black text-text-primary">{group.nombre}</h1>
+                    <p className="text-text-secondary">{group.materia} • {students.length} estudiantes</p>
                 </div>
                 <div className="flex gap-2">
                     <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition flex items-center gap-2">
@@ -194,17 +238,19 @@ export const GroupDetailPage: React.FC = () => {
                                             >
                                                 <td className="py-3 px-4">
                                                     <div className="flex items-center gap-3">
-                                                        <span className="text-2xl">{student.avatar}</span>
+                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-white font-bold">
+                                                            {student.nombre.charAt(0)}{student.apellido.charAt(0)}
+                                                        </div>
                                                         <div>
                                                             <p className="font-semibold text-text-primary flex items-center gap-2">
-                                                                {student.name}
+                                                                {student.nombre} {student.apellido}
                                                                 {index < 3 && (
                                                                     <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-600 dark:text-yellow-400">
                                                                         Top {index + 1}
                                                                     </span>
                                                                 )}
                                                             </p>
-                                                            <p className="text-xs text-text-secondary">ID: {student.id}</p>
+                                                            <p className="text-xs text-text-secondary">ID: {student.id.substring(0, 8)}...</p>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -327,9 +373,11 @@ export const GroupDetailPage: React.FC = () => {
                                         .map((student, index) => (
                                         <div key={student.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-background-secondary transition">
                                             <span className="text-2xl font-bold text-text-secondary">#{index + 1}</span>
-                                            <span className="text-xl">{student.avatar}</span>
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                                                {student.nombre.charAt(0)}{student.apellido.charAt(0)}
+                                            </div>
                                             <div className="flex-1">
-                                                <p className="font-semibold text-text-primary">{student.name}</p>
+                                                <p className="font-semibold text-text-primary">{student.nombre} {student.apellido}</p>
                                                 <p className="text-xs text-text-secondary">{student.xp.toLocaleString()} XP</p>
                                             </div>
                                             <span className="px-3 py-1 rounded-full text-sm font-bold bg-green-500/20 text-green-600 dark:text-green-400">

@@ -10,6 +10,7 @@ import { BarChart as RBarChart, Bar, XAxis, ResponsiveContainer, Tooltip } from 
 import { useToast } from '../components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SubtopicResult, TutorCopilotReport, StudentFocusReport } from '../types';
+import * as teacherService from '../services/teacher';
 import * as tutorCopilot from '../services/tutorCopilot';
 import MathMarkdown from '../components/MathMarkdown';
 import { NavLink } from 'react-router-dom';
@@ -30,7 +31,6 @@ import { CommunicationHub } from '../components/teacher/CommunicationHub';
 import { ContentList } from '../components/teacher/ContentList';
 import { SimpleTeacherDashboard } from './SimpleTeacherDashboard';
 import { useQuery } from '@tanstack/react-query';
-import * as teacherService from '../services/teacher';
 import '../styles/neo-glass.css';
 
 
@@ -278,12 +278,59 @@ export const TeacherDashboardPage: React.FC = () => {
 
 export const GroupsPage: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+
+    // Obtener grupos del profesor desde Supabase
+    const { data: grupos, isLoading, error } = useQuery({
+        queryKey: ['teacher-groups', user?.id],
+        queryFn: () => teacherService.fetchTeacherGroups(user?.id || ''),
+        enabled: !!user?.id,
+    });
+
+    if (isLoading) {
+        return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-center h-96">
+                <div className="text-center">
+                    <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+                    <p className="text-text-secondary">Cargando grupos...</p>
+                </div>
+            </motion.div>
+        );
+    }
+
+    if (error) {
+        return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-center h-96">
+                <div className="text-center">
+                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-text-primary mb-2">Error al cargar los grupos</h3>
+                    <p className="text-text-secondary mb-4">{(error as Error).message}</p>
+                    <p className="text-sm text-text-secondary">Asegúrate de haber ejecutado disable_rls_all_tables.sql en Supabase</p>
+                </div>
+            </motion.div>
+        );
+    }
+
+    if (!grupos || grupos.length === 0) {
+        return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <PageHeader title="Mis Grupos" subtitle="Gestiona tus grupos y alumnos." />
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                        <Users className="w-16 h-16 text-text-secondary mx-auto mb-4 opacity-50" />
+                        <h3 className="text-xl font-bold text-text-primary mb-2">No tienes grupos asignados</h3>
+                        <p className="text-text-secondary">Contacta al administrador para que te asigne grupos</p>
+                    </div>
+                </div>
+            </motion.div>
+        );
+    }
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <PageHeader title="Mis Grupos" subtitle="Gestiona tus grupos y alumnos." />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {MOCK_TEACHER_GROUPS.map((group, index) => (
+                {grupos.map((group, index) => (
                     <motion.div
                         key={group.id}
                         initial={{ opacity: 0, y: 20 }}
@@ -300,12 +347,19 @@ export const GroupsPage: React.FC = () => {
                                     </div>
                                     <div className="px-3 py-1 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30">
                                         <span className="text-xs font-bold text-green-600 dark:text-green-400">
-                                            {group.studentCount} alumnos
+                                            {group.total_alumnos} alumnos
                                         </span>
                                     </div>
                                 </div>
-                                <h3 className="text-xl font-black text-text-primary mb-1">{group.name}</h3>
-                                <p className="text-text-secondary font-semibold">{group.subject}</p>
+                                <h3 className="text-xl font-black text-text-primary mb-1">{group.nombre}</h3>
+                                <p className="text-text-secondary font-semibold">{group.materia}</p>
+                                {group.nivel && (
+                                    <p className="text-xs text-text-secondary mt-1">{group.nivel}</p>
+                                )}
+                                <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-xs text-text-secondary">
+                                    <span>Promedio: {group.promedio_general.toFixed(1)}</span>
+                                    <span>Asistencia: {group.tasa_asistencia.toFixed(0)}%</span>
+                                </div>
                                 <div className="mt-4 pt-4 border-t border-border">
                                     <SecondaryButton 
                                         className="w-full"
