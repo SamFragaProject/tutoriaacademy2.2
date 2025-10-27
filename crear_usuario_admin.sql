@@ -17,6 +17,12 @@ ALTER TABLE IF EXISTS asistencias DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS mensajes DISABLE ROW LEVEL SECURITY;
 
 -- PASO 2: CREAR USUARIO ADMIN
+-- OPCIÓN FÁCIL: Desactivar temporalmente la foreign key, crear el usuario, y reactivarla
+
+-- Desactivar constraint temporalmente
+ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_id_fkey;
+
+-- Crear usuario admin (sin foreign key)
 INSERT INTO usuarios (
     id,
     nombre,
@@ -35,6 +41,10 @@ INSERT INTO usuarios (
     NOW()
 ) ON CONFLICT (email) DO UPDATE 
 SET rol = 'admin', activo = true;
+
+-- Re-agregar constraint (opcional - puedes dejarlo sin foreign key para desarrollo)
+-- ALTER TABLE usuarios ADD CONSTRAINT usuarios_id_fkey 
+-- FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 -- PASO 3: VERIFICAR QUE SE CREÓ
 SELECT id, nombre, apellidos, email, rol, activo 
