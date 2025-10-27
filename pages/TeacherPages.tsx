@@ -5,8 +5,6 @@ import { PrimaryButton, SecondaryButton, ProgressBar } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { MOCK_EARLY_ALERTS, MOCK_QUESTION_ANALYTICS, MOCK_TEACHER_KPIS, MOCK_TEACHER_GROUPS, MOCK_HEATMAP_DATA, MOCK_GROUP_REPORTS } from '../constants';
 import { AlertTriangle, Clock, Activity, Zap, CheckCircle, TrendingUp, BarChart2, BookCopy, FilePlus, BrainCircuit, Loader2, Check, Send, Files, ClipboardList, AlertCircle, Users, Calendar, BookOpen, FileText, MessageSquare, Award } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import * as teacherService from '../services/teacher';
 import { BarChart as RBarChart, Bar, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { useToast } from '../components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -275,107 +273,45 @@ export const TeacherDashboardPage: React.FC = () => {
     );
 };
 
-export const GroupsPage: React.FC = () => {
-    const { user, userData } = useAuth();
-    
-    // Obtener grupos del profesor desde Supabase
-    const { data: grupos, isLoading } = useQuery({
-        queryKey: ['teacher-groups', user?.id],
-        queryFn: () => teacherService.fetchTeacherGroups(user?.id || ''),
-        enabled: !!user?.id
-    });
-
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center h-96">
-                <Loader2 className="animate-spin text-primary" size={48} />
-                <p className="ml-4 text-text-secondary">Cargando grupos...</p>
-            </div>
-        );
-    }
-
-    if (!grupos || grupos.length === 0) {
-        return (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <PageHeader title="Mis Grupos" subtitle="Gestiona tus grupos y alumnos." />
-                <Card className="p-8 text-center">
-                    <BookCopy className="w-16 h-16 text-text-secondary mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-text-primary mb-2">
-                        No tienes grupos asignados
-                    </h3>
-                    <p className="text-text-secondary">
-                        Contacta con el administrador para que te asigne grupos.
-                    </p>
-                </Card>
-            </motion.div>
-        );
-    }
-
-    return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <PageHeader title="Mis Grupos" subtitle="Gestiona tus grupos y alumnos." />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {grupos.map((group, index) => (
-                    <motion.div
-                        key={group.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        whileHover={{ y: -8, scale: 1.02 }}
-                    >
-                        <Card className="border-2 hover:border-primary/50 transition-all bg-gradient-to-br from-purple-500/5 to-blue-500/5 relative overflow-hidden group">
-                            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                            <div className="relative">
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg">
-                                        <BookCopy className="w-6 h-6 text-white" />
-                                    </div>
-                                    <div className="px-3 py-1 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30">
-                                        <span className="text-xs font-bold text-green-600 dark:text-green-400">
-                                            {group.total_alumnos} alumnos
-                                        </span>
-                                    </div>
+export const GroupsPage: React.FC = () => (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <PageHeader title="Mis Grupos" subtitle="Gestiona tus grupos y alumnos." />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {MOCK_TEACHER_GROUPS.map((group, index) => (
+                <motion.div
+                    key={group.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ y: -8, scale: 1.02 }}
+                >
+                    <Card className="border-2 hover:border-primary/50 transition-all bg-gradient-to-br from-purple-500/5 to-blue-500/5 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="relative">
+                            <div className="flex items-start justify-between mb-3">
+                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg">
+                                    <BookCopy className="w-6 h-6 text-white" />
                                 </div>
-                                <h3 className="text-xl font-black text-text-primary mb-1">{group.nombre}</h3>
-                                <p className="text-text-secondary font-semibold mb-2">{group.materia}</p>
-                                
-                                {/* Estadísticas del grupo */}
-                                <div className="space-y-2 mb-4">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-text-secondary">Promedio:</span>
-                                        <span className="font-bold text-text-primary">
-                                            {group.promedio_general.toFixed(1)}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-text-secondary">Asistencia:</span>
-                                        <span className="font-bold text-green-600">
-                                            {group.tasa_asistencia.toFixed(0)}%
-                                        </span>
-                                    </div>
-                                    {group.tareas_pendientes > 0 && (
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-text-secondary">Pendientes:</span>
-                                            <span className="font-bold text-yellow-600">
-                                                {group.tareas_pendientes} tareas
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="mt-4 pt-4 border-t border-border">
-                                    <SecondaryButton className="w-full">
-                                        Ver Detalles
-                                    </SecondaryButton>
+                                <div className="px-3 py-1 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30">
+                                    <span className="text-xs font-bold text-green-600 dark:text-green-400">
+                                        {group.studentCount} alumnos
+                                    </span>
                                 </div>
                             </div>
-                        </Card>
-                    </motion.div>
-                ))}
-            </div>
-        </motion.div>
-    );
-};
+                            <h3 className="text-xl font-black text-text-primary mb-1">{group.name}</h3>
+                            <p className="text-text-secondary font-semibold">{group.subject}</p>
+                            <div className="mt-4 pt-4 border-t border-border">
+                                <SecondaryButton className="w-full">
+                                    Ver Detalles
+                                </SecondaryButton>
+                            </div>
+                        </div>
+                    </Card>
+                </motion.div>
+            ))}
+        </div>
+    </motion.div>
+);
 
 export const QuestionBankPage: React.FC = () => {
     const [selectedSubject, setSelectedSubject] = useState('Matemáticas');
@@ -534,123 +470,81 @@ const Heatmap: React.FC<{ data: SubtopicResult[] }> = ({ data }) => {
 
 
 export const TeacherResultsPage: React.FC = () => {
-    const { user } = useAuth();
-    const { addToast } = useToast();
-    const [selectedGroupId, setSelectedGroupId] = useState<string>('');
-    const [selectedSubtopic, setSelectedSubtopic] = useState<SubtopicResult | null>(null);
-
-    // Obtener grupos del profesor
-    const { data: grupos } = useQuery({
-        queryKey: ['teacher-groups', user?.id],
-        queryFn: () => teacherService.fetchTeacherGroups(user?.id || ''),
-        enabled: !!user?.id
-    });
-
-    // Obtener heatmap data del grupo seleccionado
-    const { data: heatmapData, isLoading: loadingHeatmap } = useQuery({
-        queryKey: ['heatmap', selectedGroupId],
-        queryFn: () => teacherService.fetchHeatmapData(selectedGroupId),
-        enabled: !!selectedGroupId
-    });
-
-    // Seleccionar el primer grupo por defecto
-    useEffect(() => {
-        if (grupos && grupos.length > 0 && !selectedGroupId) {
-            setSelectedGroupId(grupos[0].id);
-        }
-    }, [grupos, selectedGroupId]);
-
-    // Actualizar selectedSubtopic cuando cambian los datos del heatmap
-    useEffect(() => {
-        if (heatmapData && heatmapData.length > 0 && !selectedSubtopic) {
-            setSelectedSubtopic(heatmapData[0]);
-        }
-    }, [heatmapData, selectedSubtopic]);
-
-    const handleCreateReinforcement = (subtopic: string) => {
-        addToast(
-            <div className="flex items-center gap-2 bg-surface-1 p-3 rounded-lg border border-border">
-                <Zap size={18} className="text-green-400" />
-                <span className="font-semibold text-text-primary">Refuerzo para "{subtopic}" asignado.</span>
-            </div>
-        );
-    };
-
-    if (!grupos || grupos.length === 0) {
-        return (
-            <div>
-                <PageHeader title="Resultados y Analíticas" subtitle="Analiza el rendimiento de tus alumnos por subtema." />
-                <Card className="p-8 text-center">
-                    <BarChart2 className="w-16 h-16 text-text-secondary mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-text-primary mb-2">
-                        No tienes grupos asignados
-                    </h3>
-                    <p className="text-text-secondary">
-                        Necesitas tener grupos con calificaciones para ver analíticas.
-                    </p>
-                </Card>
-            </div>
-        );
-    }
+    const [selectedGroupId, setSelectedGroupId] = useState<string>(MOCK_TEACHER_GROUPS[0]?.id || '');
 
     return (
-        <div>
-            <PageHeader title="Resultados y Analíticas" subtitle="Analiza el rendimiento de tus alumnos por subtema." />
-            <Card>
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                    <h2 className="text-xl font-bold text-text-primary">Heatmap de Rendimiento</h2>
-                    <select 
-                        value={selectedGroupId}
-                        onChange={(e) => setSelectedGroupId(e.target.value)}
-                        className="bg-surface-1 border border-border rounded-input px-3 py-1.5 text-sm w-full sm:w-auto"
-                    >
-                        {grupos.map(g => (
-                            <option key={g.id} value={g.id}>
-                                {g.nombre} ({g.materia})
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                
-                {loadingHeatmap ? (
-                    <div className="flex items-center justify-center py-12">
-                        <Loader2 className="animate-spin text-primary mr-2" />
-                        <span className="text-text-secondary">Cargando heatmap...</span>
-                    </div>
-                ) : !heatmapData || heatmapData.length === 0 ? (
-                    <div className="text-center py-12">
-                        <p className="text-text-secondary">
-                            No hay calificaciones registradas para este grupo.
-                        </p>
-                    </div>
-                ) : (
-                    <Heatmap data={heatmapData} />
-                )}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <PageHeader title="Resultados por Materia" subtitle="Mapa de calor y análisis de rendimiento." />
+
+            <Card className="mb-6">
+                <label className="block mb-2 text-sm font-bold text-text-primary">
+                    Selecciona un Grupo
+                </label>
+                <select
+                    value={selectedGroupId}
+                    onChange={(e) => setSelectedGroupId(e.target.value)}
+                    className="w-full px-4 py-2 border border-border rounded-lg bg-background text-text-primary"
+                >
+                    {MOCK_TEACHER_GROUPS.map((group) => (
+                        <option key={group.id} value={group.id}>
+                            {group.name} - {group.subject}
+                        </option>
+                    ))}
+                </select>
             </Card>
-            
-            {heatmapData && heatmapData.length > 0 && (
-                <Card className="mt-6">
-                    <h2 className="text-xl font-bold text-text-primary mb-4">Refuerzo 1-Clic</h2>
-                    <p className="text-text-secondary text-sm mb-4">Selecciona un subtema con bajo rendimiento para asignar automáticamente un mini-quiz de refuerzo.</p>
-                    <div className="flex flex-col sm:flex-row items-center gap-4">
-                        <select 
-                            onChange={(e) => setSelectedSubtopic(heatmapData.find(d => d.subtopic === e.target.value) || null)} 
-                            value={selectedSubtopic?.subtopic || ''}
-                            className="bg-surface-1 border border-border rounded-input px-3 py-2 text-sm w-full sm:w-auto flex-grow"
-                        >
-                            {heatmapData.map(d => <option key={d.subtopic} value={d.subtopic}>{d.subtopic}</option>)}
-                        </select>
-                        <PrimaryButton 
-                            onClick={() => selectedSubtopic && handleCreateReinforcement(selectedSubtopic.subtopic)}
-                            disabled={!selectedSubtopic}
-                            className="w-full sm:w-auto"
-                        >
-                            <Zap size={16} className="mr-2"/> Asignar Refuerzo
-                        </PrimaryButton>
-                    </div>
-                </Card>
-            )}
-        </div>
+
+            {/* Heatmap */}
+            <Card className="mb-6">
+                <h2 className="text-2xl font-black text-text-primary mb-4">
+                    Mapa de Calor - Rendimiento por Subtema
+                </h2>
+                <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                        <thead>
+                            <tr>
+                                <th className="border border-border px-4 py-2 text-left bg-background-secondary font-bold text-text-primary">
+                                    Estudiante
+                                </th>
+                                {MOCK_HEATMAP_DATA.map((subtopic) => (
+                                    <th
+                                        key={subtopic.subtopic}
+                                        className="border border-border px-4 py-2 text-center bg-background-secondary font-bold text-text-primary"
+                                    >
+                                        {subtopic.subtopic}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {MOCK_HEATMAP_DATA[0]?.results.map((student) => (
+                                <tr key={student.studentId}>
+                                    <td className="border border-border px-4 py-2 font-semibold text-text-primary">
+                                        {student.studentName}
+                                    </td>
+                                    {MOCK_HEATMAP_DATA.map((subtopic) => {
+                                        const studentScore = subtopic.results.find(r => r.studentId === student.studentId)?.score || 0;
+                                        let bgColor = 'bg-gray-100 dark:bg-gray-800';
+                                        if (studentScore >= 90) bgColor = 'bg-green-500';
+                                        else if (studentScore >= 75) bgColor = 'bg-blue-500';
+                                        else if (studentScore >= 60) bgColor = 'bg-yellow-500';
+                                        else bgColor = 'bg-red-500';
+
+                                        return (
+                                            <td
+                                                key={subtopic.subtopic}
+                                                className={`border border-border px-4 py-2 text-center ${bgColor} text-white font-bold`}
+                                            >
+                                                {studentScore}
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
+        </motion.div>
     );
 };
 
