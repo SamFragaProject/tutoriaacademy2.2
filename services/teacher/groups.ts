@@ -3,7 +3,7 @@
  * Gestión de grupos, alumnos y estadísticas
  */
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../src/lib/supabase';
 
 export interface Grupo {
     id: string;
