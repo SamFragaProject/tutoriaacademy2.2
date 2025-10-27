@@ -151,7 +151,7 @@ export const TeacherDashboardPage: React.FC = () => {
             {/* Quick Actions Chips */}
             <div className="flex flex-wrap items-center gap-3 mb-8">
                 {quickActions.map((action, i) => (
-                    <Chip key={i} icon={action.icon} label={action.label} variant={action.variant} />
+                    <Chip icon={action.icon} label={action.label} variant={action.variant} />
                 ))}
             </div>
 
@@ -549,7 +549,7 @@ export const TeacherResultsPage: React.FC = () => {
 };
 
 export const TutorCopilotPage: React.FC = () => {
-    const { user } = useAuth();
+    const { user, userData } = useAuth();
     const [report, setReport] = useState<TutorCopilotReport | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState(MOCK_TEACHER_GROUPS[0]?.id || '');
@@ -577,7 +577,7 @@ export const TutorCopilotPage: React.FC = () => {
      const handleCreateReinforcement = (student: StudentFocusReport) => {
         if (!user) return;
         tutorCopilot.assignReinforcement({
-            teacherName: user.name,
+            teacherName: userData?.nombre || user.email || 'Profesor',
             studentId: student.studentId,
             subject: student.subject,
             mainTopic: student.mainTopic,
@@ -716,7 +716,7 @@ export const GradingPage: React.FC = () => {
 
             <div className="flex flex-wrap items-center gap-3 mb-6">
                 {filtros.map((f, i) => (
-                    <Chip key={i} label={f.label} variant={f.variant} />
+                    <Chip label={f.label} variant={f.variant} />
                 ))}
             </div>
 
