@@ -1,32 +1,54 @@
 -- ============================================
--- SCHEMA COMPLETO SUPABASE - TutoriA Academy
--- Fase 4: Tablas para Profesores y Estudiantes
+-- FIX: Actualizar tablas existentes y crear nuevas
 -- ============================================
 
--- ==========================================
--- 1. TABLA GRUPOS (Ya existe pero la extendemos)
--- ==========================================
-CREATE TABLE IF NOT EXISTS grupos (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    escuela_id UUID REFERENCES escuelas(id) ON DELETE CASCADE,
-    profesor_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
-    nombre TEXT NOT NULL,
-    materia TEXT NOT NULL,
-    nivel TEXT,
-    descripcion TEXT,
-    codigo_acceso TEXT UNIQUE,
-    activo BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- 1. Actualizar tabla GRUPOS (ya existe)
+ALTER TABLE grupos 
+ADD COLUMN IF NOT EXISTS codigo_acceso TEXT,
+ADD COLUMN IF NOT EXISTS nivel TEXT,
+ADD COLUMN IF NOT EXISTS descripcion TEXT;
 
--- Õndices para grupos
 CREATE INDEX IF NOT EXISTS idx_grupos_escuela ON grupos(escuela_id);
 CREATE INDEX IF NOT EXISTS idx_grupos_profesor ON grupos(profesor_id);
 CREATE INDEX IF NOT EXISTS idx_grupos_codigo ON grupos(codigo_acceso);
 
+-- 2. Actualizar tabla TAREAS (si ya existe)
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'tareas') THEN
+        ALTER TABLE tareas 
+        ADD COLUMN IF NOT EXISTS tipo TEXT,
+        ADD COLUMN IF NOT EXISTS fecha_asignacion TIMESTAMPTZ DEFAULT NOW(),
+        ADD COLUMN IF NOT EXISTS fecha_entrega TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS puntos_max INTEGER DEFAULT 100,
+        ADD COLUMN IF NOT EXISTS archivo_url TEXT,
+        ADD COLUMN IF NOT EXISTS instrucciones JSONB,
+        ADD COLUMN IF NOT EXISTS activo BOOLEAN DEFAULT true;
+    END IF;
+END $$;
+
+-- 3. Actualizar tabla EXAMENES (si ya existe)
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'examenes') THEN
+        ALTER TABLE examenes 
+        ADD COLUMN IF NOT EXISTS tipo TEXT,
+        ADD COLUMN IF NOT EXISTS duracion_minutos INTEGER DEFAULT 60,
+        ADD COLUMN IF NOT EXISTS fecha_inicio TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS fecha_fin TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS intentos_permitidos INTEGER DEFAULT 1,
+        ADD COLUMN IF NOT EXISTS mostrar_resultados BOOLEAN DEFAULT true,
+        ADD COLUMN IF NOT EXISTS aleatorio BOOLEAN DEFAULT false,
+        ADD COLUMN IF NOT EXISTS puntos_total INTEGER DEFAULT 100,
+        ADD COLUMN IF NOT EXISTS configuracion JSONB,
+        ADD COLUMN IF NOT EXISTS activo BOOLEAN DEFAULT true;
+    END IF;
+END $$;
+
+-- Ahora continuar con el resto del schema...
+
 -- ==========================================
--- 2. TABLA GRUPOS_ALUMNOS (RelaciÛn muchos a muchos)
+-- 2. TABLA GRUPOS_ALUMNOS (Relaci√≥n muchos a muchos)
 -- ==========================================
 CREATE TABLE IF NOT EXISTS grupos_alumnos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -37,7 +59,6 @@ CREATE TABLE IF NOT EXISTS grupos_alumnos (
     UNIQUE(grupo_id, alumno_id)
 );
 
--- Õndices para grupos_alumnos
 CREATE INDEX IF NOT EXISTS idx_grupos_alumnos_grupo ON grupos_alumnos(grupo_id);
 CREATE INDEX IF NOT EXISTS idx_grupos_alumnos_alumno ON grupos_alumnos(alumno_id);
 
@@ -60,7 +81,6 @@ CREATE TABLE IF NOT EXISTS tareas (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Õndices para tareas
 CREATE INDEX IF NOT EXISTS idx_tareas_grupo ON tareas(grupo_id);
 CREATE INDEX IF NOT EXISTS idx_tareas_profesor ON tareas(profesor_id);
 CREATE INDEX IF NOT EXISTS idx_tareas_fecha_entrega ON tareas(fecha_entrega);
@@ -82,7 +102,6 @@ CREATE TABLE IF NOT EXISTS entregas (
     UNIQUE(tarea_id, alumno_id)
 );
 
--- Õndices para entregas
 CREATE INDEX IF NOT EXISTS idx_entregas_tarea ON entregas(tarea_id);
 CREATE INDEX IF NOT EXISTS idx_entregas_alumno ON entregas(alumno_id);
 CREATE INDEX IF NOT EXISTS idx_entregas_estado ON entregas(estado);
@@ -109,10 +128,33 @@ CREATE TABLE IF NOT EXISTS examenes (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Õndices para examenes
+-- Agregar columnas si la tabla ya exist√≠a
+DO $$ 
+BEGIN
+    ALTER TABLE examenes 
+    ADD COLUMN IF NOT EXISTS tipo TEXT,
+    ADD COLUMN IF NOT EXISTS duracion_minutos INTEGER DEFAULT 60,
+    ADD COLUMN IF NOT EXISTS fecha_inicio TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS fecha_fin TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS intentos_permitidos INTEGER DEFAULT 1,
+    ADD COLUMN IF NOT EXISTS mostrar_resultados BOOLEAN DEFAULT true,
+    ADD COLUMN IF NOT EXISTS aleatorio BOOLEAN DEFAULT false,
+    ADD COLUMN IF NOT EXISTS puntos_total INTEGER DEFAULT 100,
+    ADD COLUMN IF NOT EXISTS configuracion JSONB,
+    ADD COLUMN IF NOT EXISTS activo BOOLEAN DEFAULT true;
+EXCEPTION WHEN duplicate_column THEN
+    NULL;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_examenes_grupo ON examenes(grupo_id);
 CREATE INDEX IF NOT EXISTS idx_examenes_profesor ON examenes(profesor_id);
-CREATE INDEX IF NOT EXISTS idx_examenes_fecha ON examenes(fecha_inicio, fecha_fin);
+-- Solo crear √≠ndice de fechas si la columna existe
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='examenes' AND column_name='fecha_inicio') THEN
+        CREATE INDEX IF NOT EXISTS idx_examenes_fecha ON examenes(fecha_inicio, fecha_fin);
+    END IF;
+END $$;
 
 -- ==========================================
 -- 6. TABLA PREGUNTAS
@@ -134,7 +176,6 @@ CREATE TABLE IF NOT EXISTS preguntas (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Õndices para preguntas
 CREATE INDEX IF NOT EXISTS idx_preguntas_examen ON preguntas(examen_id);
 CREATE INDEX IF NOT EXISTS idx_preguntas_profesor ON preguntas(profesor_id);
 CREATE INDEX IF NOT EXISTS idx_preguntas_tema ON preguntas(tema, subtema);
@@ -159,7 +200,6 @@ CREATE TABLE IF NOT EXISTS resultados_examenes (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Õndices para resultados_examenes
 CREATE INDEX IF NOT EXISTS idx_resultados_examen ON resultados_examenes(examen_id);
 CREATE INDEX IF NOT EXISTS idx_resultados_alumno ON resultados_examenes(alumno_id);
 CREATE INDEX IF NOT EXISTS idx_resultados_estado ON resultados_examenes(estado);
@@ -183,7 +223,6 @@ CREATE TABLE IF NOT EXISTS calificaciones (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Õndices para calificaciones
 CREATE INDEX IF NOT EXISTS idx_calificaciones_alumno ON calificaciones(alumno_id);
 CREATE INDEX IF NOT EXISTS idx_calificaciones_grupo ON calificaciones(grupo_id);
 CREATE INDEX IF NOT EXISTS idx_calificaciones_tema ON calificaciones(tema, subtema);
@@ -203,13 +242,12 @@ CREATE TABLE IF NOT EXISTS asistencias (
     UNIQUE(grupo_id, alumno_id, fecha)
 );
 
--- Õndices para asistencias
 CREATE INDEX IF NOT EXISTS idx_asistencias_grupo ON asistencias(grupo_id);
 CREATE INDEX IF NOT EXISTS idx_asistencias_alumno ON asistencias(alumno_id);
 CREATE INDEX IF NOT EXISTS idx_asistencias_fecha ON asistencias(fecha);
 
 -- ==========================================
--- 10. TABLA MENSAJES (ComunicaciÛn profesor-alumno)
+-- 10. TABLA MENSAJES (Comunicaci√≥n profesor-alumno)
 -- ==========================================
 CREATE TABLE IF NOT EXISTS mensajes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -224,14 +262,13 @@ CREATE TABLE IF NOT EXISTS mensajes (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Õndices para mensajes
 CREATE INDEX IF NOT EXISTS idx_mensajes_remitente ON mensajes(remitente_id);
 CREATE INDEX IF NOT EXISTS idx_mensajes_destinatario ON mensajes(destinatario_id);
 CREATE INDEX IF NOT EXISTS idx_mensajes_grupo ON mensajes(grupo_id);
 CREATE INDEX IF NOT EXISTS idx_mensajes_leido ON mensajes(leido);
 
 -- ==========================================
--- 11. FUNCI”N PARA CALCULAR ESTADÕSTICAS DE GRUPO
+-- 11. FUNCI√ìN PARA CALCULAR ESTAD√çSTICAS DE GRUPO
 -- ==========================================
 CREATE OR REPLACE FUNCTION calcular_estadisticas_grupo(grupo_uuid UUID)
 RETURNS TABLE (
@@ -270,7 +307,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Aplicar trigger a grupos
 DROP TRIGGER IF EXISTS update_grupos_updated_at ON grupos;
 CREATE TRIGGER update_grupos_updated_at
     BEFORE UPDATE ON grupos
@@ -281,7 +317,6 @@ CREATE TRIGGER update_grupos_updated_at
 -- 13. ROW LEVEL SECURITY (RLS) POLICIES
 -- ==========================================
 
--- Habilitar RLS
 ALTER TABLE grupos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE grupos_alumnos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tareas ENABLE ROW LEVEL SECURITY;
@@ -291,7 +326,15 @@ ALTER TABLE resultados_examenes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE calificaciones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mensajes ENABLE ROW LEVEL SECURITY;
 
--- Policies para GRUPOS
+-- Eliminar policies existentes si existen
+DROP POLICY IF EXISTS "Profesores ven sus grupos" ON grupos;
+DROP POLICY IF EXISTS "Alumnos ven sus grupos" ON grupos;
+DROP POLICY IF EXISTS "Admins ven todos los grupos" ON grupos;
+DROP POLICY IF EXISTS "Alumnos ven sus calificaciones" ON calificaciones;
+DROP POLICY IF EXISTS "Profesores ven calificaciones de sus grupos" ON calificaciones;
+DROP POLICY IF EXISTS "Profesores crean/actualizan calificaciones" ON calificaciones;
+
+-- Crear policies
 CREATE POLICY "Profesores ven sus grupos" ON grupos
     FOR SELECT USING (auth.uid() = profesor_id);
 
@@ -314,7 +357,6 @@ CREATE POLICY "Admins ven todos los grupos" ON grupos
         )
     );
 
--- Policies para CALIFICACIONES
 CREATE POLICY "Alumnos ven sus calificaciones" ON calificaciones
     FOR SELECT USING (alumno_id = auth.uid());
 
@@ -339,4 +381,3 @@ CREATE POLICY "Profesores crean/actualizan calificaciones" ON calificaciones
 -- ==========================================
 -- FIN DEL SCHEMA
 -- ==========================================
-

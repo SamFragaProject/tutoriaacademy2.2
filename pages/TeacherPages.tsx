@@ -28,6 +28,8 @@ import { TaskManager } from '../components/teacher/TaskManager';
 import { CommunicationHub } from '../components/teacher/CommunicationHub';
 import { ContentList } from '../components/teacher/ContentList';
 import { SimpleTeacherDashboard } from './SimpleTeacherDashboard';
+import { useQuery } from '@tanstack/react-query';
+import * as teacherService from '../services/teacher';
 import '../styles/neo-glass.css';
 
 
@@ -273,45 +275,95 @@ export const TeacherDashboardPage: React.FC = () => {
     );
 };
 
-export const GroupsPage: React.FC = () => (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <PageHeader title="Mis Grupos" subtitle="Gestiona tus grupos y alumnos." />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {MOCK_TEACHER_GROUPS.map((group, index) => (
-                <motion.div
-                    key={group.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ y: -8, scale: 1.02 }}
-                >
-                    <Card className="border-2 hover:border-primary/50 transition-all bg-gradient-to-br from-purple-500/5 to-blue-500/5 relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <div className="relative">
-                            <div className="flex items-start justify-between mb-3">
-                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg">
-                                    <BookCopy className="w-6 h-6 text-white" />
+export const GroupsPage: React.FC = () => {
+    const { user } = useAuth();
+    
+    const { data: grupos, isLoading, error } = useQuery({
+        queryKey: ['teacher-groups', user?.id],
+        queryFn: () => teacherService.fetchTeacherGroups(user?.id || ''),
+        enabled: !!user?.id,
+    });
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 gap-4">
+                <AlertCircle className="w-12 h-12 text-red-500" />
+                <p className="text-text-secondary">Error al cargar los grupos</p>
+            </div>
+        );
+    }
+
+    if (!grupos || grupos.length === 0) {
+        return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <PageHeader title="Mis Grupos" subtitle="Gestiona tus grupos y alumnos." />
+                <div className="flex flex-col items-center justify-center h-64 gap-4">
+                    <Users className="w-16 h-16 text-text-secondary opacity-50" />
+                    <p className="text-text-secondary text-lg">No tienes grupos creados aún</p>
+                    <PrimaryButton>Crear Primer Grupo</PrimaryButton>
+                </div>
+            </motion.div>
+        );
+    }
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <PageHeader title="Mis Grupos" subtitle="Gestiona tus grupos y alumnos." />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {grupos.map((group, index) => (
+                    <motion.div
+                        key={group.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={{ y: -8, scale: 1.02 }}
+                    >
+                        <Card className="border-2 hover:border-primary/50 transition-all bg-gradient-to-br from-purple-500/5 to-blue-500/5 relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <div className="relative">
+                                <div className="flex items-start justify-between mb-3">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg">
+                                        <BookCopy className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div className="px-3 py-1 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30">
+                                        <span className="text-xs font-bold text-green-600 dark:text-green-400">
+                                            {group.total_alumnos} alumnos
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="px-3 py-1 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30">
-                                    <span className="text-xs font-bold text-green-600 dark:text-green-400">
-                                        {group.studentCount} alumnos
-                                    </span>
+                                <h3 className="text-xl font-black text-text-primary mb-1">{group.nombre}</h3>
+                                <p className="text-text-secondary font-semibold">{group.materia}</p>
+                                <div className="mt-3 space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-text-secondary">Nivel:</span>
+                                        <span className="font-semibold text-text-primary">{group.nivel}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-text-secondary">Promedio:</span>
+                                        <span className="font-bold text-primary">{group.promedio_general.toFixed(1)}</span>
+                                    </div>
+                                </div>
+                                <div className="mt-4 pt-4 border-t border-border">
+                                    <SecondaryButton className="w-full">
+                                        Ver Detalles
+                                    </SecondaryButton>
                                 </div>
                             </div>
-                            <h3 className="text-xl font-black text-text-primary mb-1">{group.name}</h3>
-                            <p className="text-text-secondary font-semibold">{group.subject}</p>
-                            <div className="mt-4 pt-4 border-t border-border">
-                                <SecondaryButton className="w-full">
-                                    Ver Detalles
-                                </SecondaryButton>
-                            </div>
-                        </div>
-                    </Card>
-                </motion.div>
-            ))}
-        </div>
-    </motion.div>
-);
+                        </Card>
+                    </motion.div>
+                ))}
+            </div>
+        </motion.div>
+    );
+};
 
 export const QuestionBankPage: React.FC = () => {
     const [selectedSubject, setSelectedSubject] = useState('Matemáticas');
@@ -470,7 +522,43 @@ const Heatmap: React.FC<{ data: SubtopicResult[] }> = ({ data }) => {
 
 
 export const TeacherResultsPage: React.FC = () => {
-    const [selectedGroupId, setSelectedGroupId] = useState<string>(MOCK_TEACHER_GROUPS[0]?.id || '');
+    const { user } = useAuth();
+    const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+
+    // Obtener grupos del profesor
+    const { data: grupos } = useQuery({
+        queryKey: ['teacher-groups', user?.id],
+        queryFn: () => teacherService.fetchTeacherGroups(user?.id || ''),
+        enabled: !!user?.id,
+    });
+
+    // Seleccionar el primer grupo por defecto
+    useEffect(() => {
+        if (grupos && grupos.length > 0 && !selectedGroupId) {
+            setSelectedGroupId(grupos[0].id);
+        }
+    }, [grupos, selectedGroupId]);
+
+    // Obtener datos del heatmap para el grupo seleccionado
+    const { data: heatmapData, isLoading: heatmapLoading } = useQuery({
+        queryKey: ['heatmap-data', selectedGroupId],
+        queryFn: () => teacherService.fetchHeatmapData(selectedGroupId),
+        enabled: !!selectedGroupId,
+    });
+
+    // Obtener subtemas únicos para las columnas
+    const subtemas = useMemo(() => {
+        if (!heatmapData || heatmapData.length === 0) return [];
+        const allKeys = Object.keys(heatmapData[0] || {});
+        return allKeys.filter(key => key !== 'alumno_id' && key !== 'alumno_nombre');
+    }, [heatmapData]);
+
+    const getCellColor = (score: number) => {
+        if (score >= 90) return 'bg-green-500';
+        if (score >= 75) return 'bg-blue-500';
+        if (score >= 60) return 'bg-yellow-500';
+        return 'bg-red-500';
+    };
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -485,9 +573,9 @@ export const TeacherResultsPage: React.FC = () => {
                     onChange={(e) => setSelectedGroupId(e.target.value)}
                     className="w-full px-4 py-2 border border-border rounded-lg bg-background text-text-primary"
                 >
-                    {MOCK_TEACHER_GROUPS.map((group) => (
+                    {grupos?.map((group) => (
                         <option key={group.id} value={group.id}>
-                            {group.name} - {group.subject}
+                            {group.nombre} - {group.materia}
                         </option>
                     ))}
                 </select>
@@ -498,51 +586,56 @@ export const TeacherResultsPage: React.FC = () => {
                 <h2 className="text-2xl font-black text-text-primary mb-4">
                     Mapa de Calor - Rendimiento por Subtema
                 </h2>
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr>
-                                <th className="border border-border px-4 py-2 text-left bg-background-secondary font-bold text-text-primary">
-                                    Estudiante
-                                </th>
-                                {MOCK_HEATMAP_DATA.map((subtopic) => (
-                                    <th
-                                        key={subtopic.subtopic}
-                                        className="border border-border px-4 py-2 text-center bg-background-secondary font-bold text-text-primary"
-                                    >
-                                        {subtopic.subtopic}
+                {heatmapLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                ) : !heatmapData || heatmapData.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-64 gap-4">
+                        <BarChart2 className="w-16 h-16 text-text-secondary opacity-50" />
+                        <p className="text-text-secondary text-lg">No hay calificaciones registradas para este grupo</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                            <thead>
+                                <tr>
+                                    <th className="border border-border px-4 py-2 text-left bg-background-secondary font-bold text-text-primary">
+                                        Estudiante
                                     </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {MOCK_HEATMAP_DATA[0]?.results.map((student) => (
-                                <tr key={student.studentId}>
-                                    <td className="border border-border px-4 py-2 font-semibold text-text-primary">
-                                        {student.studentName}
-                                    </td>
-                                    {MOCK_HEATMAP_DATA.map((subtopic) => {
-                                        const studentScore = subtopic.results.find(r => r.studentId === student.studentId)?.score || 0;
-                                        let bgColor = 'bg-gray-100 dark:bg-gray-800';
-                                        if (studentScore >= 90) bgColor = 'bg-green-500';
-                                        else if (studentScore >= 75) bgColor = 'bg-blue-500';
-                                        else if (studentScore >= 60) bgColor = 'bg-yellow-500';
-                                        else bgColor = 'bg-red-500';
-
-                                        return (
-                                            <td
-                                                key={subtopic.subtopic}
-                                                className={`border border-border px-4 py-2 text-center ${bgColor} text-white font-bold`}
-                                            >
-                                                {studentScore}
-                                            </td>
-                                        );
-                                    })}
+                                    {subtemas.map((subtema) => (
+                                        <th
+                                            key={subtema}
+                                            className="border border-border px-4 py-2 text-center bg-background-secondary font-bold text-text-primary"
+                                        >
+                                            {subtema}
+                                        </th>
+                                    ))}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {heatmapData.map((alumno) => (
+                                    <tr key={alumno.alumno_id}>
+                                        <td className="border border-border px-4 py-2 font-semibold text-text-primary">
+                                            {alumno.alumno_nombre}
+                                        </td>
+                                        {subtemas.map((subtema) => {
+                                            const score = alumno[subtema] as number || 0;
+                                            return (
+                                                <td
+                                                    key={subtema}
+                                                    className={`border border-border px-4 py-2 text-center ${getCellColor(score)} text-white font-bold`}
+                                                >
+                                                    {score}
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </Card>
         </motion.div>
     );
