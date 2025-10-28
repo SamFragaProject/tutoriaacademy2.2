@@ -118,6 +118,13 @@ export const GroupDetailPage: React.FC = () => {
                         <Mail className="w-5 h-5" />
                         Mensaje Grupal
                     </button>
+                    <button
+                        onClick={() => navigate(`/docente/grupos/${groupId}/asistencias`)}
+                        className="px-4 py-2 bg-background-secondary text-text-primary rounded-lg hover:bg-background-tertiary transition flex items-center gap-2"
+                    >
+                        <Calendar className="w-5 h-5" />
+                        Asistencias
+                    </button>
                 </div>
             </div>
 

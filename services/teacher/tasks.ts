@@ -1,429 +1,131 @@
-import { supabase } from '../../src/lib/supabase';
+import { supabase } from '../../lib/supabaseClient';
 
-export interface Task {
-  id: string;
-  titulo: string;
-  descripcion: string;
-  materia: string;
-  grupo_id: string;
-  grupo_nombre?: string;
-  profesor_id: string;
-  fecha_creacion: string;
-  fecha_entrega: string;
-  puntos: number;
-  archivo_adjunto?: string;
-  instrucciones?: string;
-  total_alumnos?: number;
-  entregas_completadas?: number;
-  entregas_pendientes?: number;
-  entregas_tarde?: number;
-  promedio_calificacion?: number;
+// Tipos en BD según supabase_schema_fase4.sql
+export type TareaTipo = 'tarea' | 'practica' | 'lectura' | 'proyecto';
+
+export interface TareaDB {
+	id: string;
+	grupo_id: string;
+	profesor_id: string;
+	titulo: string;
+	descripcion: string | null;
+	tipo: TareaTipo;
+	fecha_asignacion: string;
+	fecha_entrega: string | null;
+	puntos_max: number;
+	archivo_url: string | null;
+	instrucciones: any | null; // JSONB
+	activo: boolean;
+	created_at: string;
 }
 
-export interface TaskSubmission {
-  id: string;
-  tarea_id: string;
-  alumno_id: string;
-  alumno_nombre: string;
-  alumno_apellido: string;
-  fecha_entrega: string;
-  archivo?: string;
-  contenido?: string;
-  calificacion?: number;
-  comentarios?: string;
-  estado: 'pendiente' | 'entregada' | 'calificada' | 'tarde';
-  es_tarde: boolean;
+export interface EntregaDB {
+	id: string;
+	tarea_id: string;
+	alumno_id: string;
+	contenido: string | null;
+	archivo_url: string | null;
+	calificacion: number | null;
+	comentarios_profesor: string | null;
+	estado: 'pendiente' | 'entregada' | 'revisada' | 'retrasada' | null;
+	fecha_entrega: string;
+	created_at: string;
 }
 
-export interface CreateTaskData {
-  titulo: string;
-  descripcion: string;
-  materia: string;
-  grupo_id: string;
-  fecha_entrega: string;
-  puntos: number;
-  instrucciones?: string;
-  archivo_adjunto?: string;
+// Obtiene todas las tareas activas de un profesor
+export async function fetchTasksByTeacher(profesorId: string): Promise<TareaDB[]> {
+	const { data, error } = await supabase
+		.from('tareas')
+		.select('*')
+		.eq('profesor_id', profesorId)
+		.eq('activo', true)
+		.order('fecha_entrega', { ascending: true, nullsFirst: false });
+
+	if (error) throw error;
+	return (data || []) as TareaDB[];
 }
 
-/**
- * Obtiene todas las tareas de un profesor con estadísticas
- */
-export async function fetchTeacherTasks(profesorId: string): Promise<Task[]> {
-  try {
-    console.log('Fetching tasks for profesor:', profesorId);
+// Obtiene todas las tareas activas de un grupo
+export async function fetchTasksByGroup(grupoId: string): Promise<TareaDB[]> {
+	const { data, error } = await supabase
+		.from('tareas')
+		.select('*')
+		.eq('grupo_id', grupoId)
+		.eq('activo', true)
+		.order('fecha_entrega', { ascending: true, nullsFirst: false });
 
-    // 1. Obtener tareas del profesor
-    const { data: tareas, error: tareasError } = await supabase
-      .from('tareas')
-      .select(`
-        id,
-        titulo,
-        descripcion,
-        materia,
-        grupo_id,
-        profesor_id,
-        fecha_creacion,
-        fecha_entrega,
-        puntos,
-        archivo_adjunto,
-        instrucciones,
-        grupos (
-          nombre
-        )
-      `)
-      .eq('profesor_id', profesorId)
-      .order('fecha_creacion', { ascending: false });
-
-    if (tareasError) {
-      console.error('Error fetching tareas:', tareasError);
-      throw tareasError;
-    }
-
-    if (!tareas || tareas.length === 0) {
-      return [];
-    }
-
-    // 2. Para cada tarea, obtener estadísticas de entregas
-    const tareasConEstadisticas = await Promise.all(
-      tareas.map(async (tarea) => {
-        // Obtener total de alumnos del grupo
-        const { count: totalAlumnos } = await supabase
-          .from('grupos_alumnos')
-          .select('*', { count: 'exact', head: true })
-          .eq('grupo_id', tarea.grupo_id)
-          .eq('activo', true);
-
-        // Obtener entregas
-        const { data: entregas, error: entregasError } = await supabase
-          .from('entregas')
-          .select('estado, calificacion, fecha_entrega')
-          .eq('tarea_id', tarea.id);
-
-        if (entregasError) {
-          console.error(`Error fetching entregas for tarea ${tarea.id}:`, entregasError);
-        }
-
-        const entregasCompletadas = entregas?.filter(e => e.estado === 'entregada' || e.estado === 'calificada').length || 0;
-        const entregasTarde = entregas?.filter(e => e.estado === 'tarde').length || 0;
-        const calificaciones = entregas?.filter(e => e.calificacion !== null).map(e => e.calificacion || 0) || [];
-        const promedioCalificacion = calificaciones.length > 0
-          ? calificaciones.reduce((acc, cal) => acc + cal, 0) / calificaciones.length
-          : 0;
-
-        return {
-          ...tarea,
-          grupo_nombre: (tarea.grupos as any)?.nombre || 'Grupo sin nombre',
-          total_alumnos: totalAlumnos || 0,
-          entregas_completadas: entregasCompletadas,
-          entregas_pendientes: (totalAlumnos || 0) - entregasCompletadas,
-          entregas_tarde: entregasTarde,
-          promedio_calificacion: promedioCalificacion,
-        };
-      })
-    );
-
-    return tareasConEstadisticas;
-  } catch (error) {
-    console.error('Error in fetchTeacherTasks:', error);
-    throw error;
-  }
+	if (error) throw error;
+	return (data || []) as TareaDB[];
 }
 
-/**
- * Obtiene una tarea específica con sus entregas
- */
-export async function fetchTaskById(tareaId: string): Promise<Task | null> {
-  try {
-    const { data: tarea, error: tareaError } = await supabase
-      .from('tareas')
-      .select(`
-        id,
-        titulo,
-        descripcion,
-        materia,
-        grupo_id,
-        profesor_id,
-        fecha_creacion,
-        fecha_entrega,
-        puntos,
-        archivo_adjunto,
-        instrucciones,
-        grupos (
-          nombre
-        )
-      `)
-      .eq('id', tareaId)
-      .single();
+// Crea una nueva tarea
+export async function createTask(payload: Omit<TareaDB, 'id' | 'fecha_asignacion' | 'created_at' | 'activo'> & { activo?: boolean }) {
+	const { data, error } = await supabase
+		.from('tareas')
+		.insert([payload])
+		.select()
+		.single();
 
-    if (tareaError) {
-      console.error('Error fetching tarea:', tareaError);
-      throw tareaError;
-    }
-
-    if (!tarea) {
-      return null;
-    }
-
-    // Obtener estadísticas
-    const { count: totalAlumnos } = await supabase
-      .from('grupos_alumnos')
-      .select('*', { count: 'exact', head: true })
-      .eq('grupo_id', tarea.grupo_id)
-      .eq('activo', true);
-
-    const { data: entregas } = await supabase
-      .from('entregas')
-      .select('estado, calificacion')
-      .eq('tarea_id', tarea.id);
-
-    const entregasCompletadas = entregas?.filter(e => e.estado === 'entregada' || e.estado === 'calificada').length || 0;
-    const entregasTarde = entregas?.filter(e => e.estado === 'tarde').length || 0;
-    const calificaciones = entregas?.filter(e => e.calificacion !== null).map(e => e.calificacion || 0) || [];
-    const promedioCalificacion = calificaciones.length > 0
-      ? calificaciones.reduce((acc, cal) => acc + cal, 0) / calificaciones.length
-      : 0;
-
-    return {
-      ...tarea,
-      grupo_nombre: (tarea.grupos as any)?.nombre || 'Grupo sin nombre',
-      total_alumnos: totalAlumnos || 0,
-      entregas_completadas: entregasCompletadas,
-      entregas_pendientes: (totalAlumnos || 0) - entregasCompletadas,
-      entregas_tarde: entregasTarde,
-      promedio_calificacion: promedioCalificacion,
-    };
-  } catch (error) {
-    console.error('Error in fetchTaskById:', error);
-    throw error;
-  }
+	if (error) throw error;
+	return data as TareaDB;
 }
 
-/**
- * Obtiene las entregas de una tarea con información de los alumnos
- */
-export async function fetchTaskSubmissions(tareaId: string): Promise<TaskSubmission[]> {
-  try {
-    console.log('Fetching submissions for tarea:', tareaId);
+// Actualiza una tarea
+export async function updateTask(tareaId: string, updates: Partial<TareaDB>) {
+	const { data, error } = await supabase
+		.from('tareas')
+		.update(updates)
+		.eq('id', tareaId)
+		.select()
+		.single();
 
-    // 1. Obtener fecha de entrega de la tarea
-    const { data: tarea, error: tareaError } = await supabase
-      .from('tareas')
-      .select('fecha_entrega, grupo_id')
-      .eq('id', tareaId)
-      .single();
-
-    if (tareaError) {
-      console.error('Error fetching tarea:', tareaError);
-      throw tareaError;
-    }
-
-    // 2. Obtener todos los alumnos del grupo
-    const { data: alumnosGrupo, error: alumnosError } = await supabase
-      .from('grupos_alumnos')
-      .select('alumno_id')
-      .eq('grupo_id', tarea.grupo_id)
-      .eq('activo', true);
-
-    if (alumnosError) {
-      console.error('Error fetching alumnos:', alumnosError);
-      throw alumnosError;
-    }
-
-    if (!alumnosGrupo || alumnosGrupo.length === 0) {
-      return [];
-    }
-
-    const alumnoIds = alumnosGrupo.map(a => a.alumno_id);
-
-    // 3. Obtener usuarios (nombres y apellidos)
-    const { data: usuarios, error: usuariosError } = await supabase
-      .from('usuarios')
-      .select('id, nombre, apellido')
-      .in('id', alumnoIds);
-
-    if (usuariosError) {
-      console.error('Error fetching usuarios:', usuariosError);
-      throw usuariosError;
-    }
-
-    // 4. Obtener entregas existentes
-    const { data: entregas, error: entregasError } = await supabase
-      .from('entregas')
-      .select('*')
-      .eq('tarea_id', tareaId);
-
-    if (entregasError) {
-      console.error('Error fetching entregas:', entregasError);
-    }
-
-    // 5. Crear mapa de entregas por alumno
-    const entregasMap = new Map(entregas?.map(e => [e.alumno_id, e]) || []);
-
-    // 6. Crear lista completa de entregas (incluyendo pendientes)
-    const fechaLimite = new Date(tarea.fecha_entrega);
-    
-    const submissions: TaskSubmission[] = usuarios?.map(usuario => {
-      const entrega = entregasMap.get(usuario.id);
-      
-      if (entrega) {
-        const fechaEntrega = new Date(entrega.fecha_entrega);
-        const esTarde = fechaEntrega > fechaLimite;
-
-        return {
-          id: entrega.id,
-          tarea_id: tareaId,
-          alumno_id: usuario.id,
-          alumno_nombre: usuario.nombre || '',
-          alumno_apellido: usuario.apellido || '',
-          fecha_entrega: entrega.fecha_entrega,
-          archivo: entrega.archivo,
-          contenido: entrega.contenido,
-          calificacion: entrega.calificacion,
-          comentarios: entrega.comentarios,
-          estado: entrega.estado,
-          es_tarde: esTarde,
-        };
-      } else {
-        // Alumno sin entrega (pendiente)
-        return {
-          id: `pending-${usuario.id}`,
-          tarea_id: tareaId,
-          alumno_id: usuario.id,
-          alumno_nombre: usuario.nombre || '',
-          alumno_apellido: usuario.apellido || '',
-          fecha_entrega: '',
-          estado: 'pendiente',
-          es_tarde: false,
-        };
-      }
-    }) || [];
-
-    return submissions;
-  } catch (error) {
-    console.error('Error in fetchTaskSubmissions:', error);
-    throw error;
-  }
+	if (error) throw error;
+	return data as TareaDB;
 }
 
-/**
- * Crea una nueva tarea
- */
-export async function createTask(profesorId: string, taskData: CreateTaskData): Promise<Task> {
-  try {
-    const { data: tarea, error } = await supabase
-      .from('tareas')
-      .insert({
-        ...taskData,
-        profesor_id: profesorId,
-        fecha_creacion: new Date().toISOString(),
-      })
-      .select()
-      .single();
+// Eliminación lógica de una tarea
+export async function deleteTask(tareaId: string) {
+	const { error } = await supabase
+		.from('tareas')
+		.update({ activo: false })
+		.eq('id', tareaId);
 
-    if (error) {
-      console.error('Error creating tarea:', error);
-      throw error;
-    }
-
-    return tarea;
-  } catch (error) {
-    console.error('Error in createTask:', error);
-    throw error;
-  }
+	if (error) throw error;
 }
 
-/**
- * Actualiza una tarea existente
- */
-export async function updateTask(tareaId: string, updates: Partial<CreateTaskData>): Promise<Task> {
-  try {
-    const { data: tarea, error } = await supabase
-      .from('tareas')
-      .update(updates)
-      .eq('id', tareaId)
-      .select()
-      .single();
+// Entregas de una tarea
+export async function fetchTaskSubmissions(tareaId: string): Promise<EntregaDB[]> {
+	const { data, error } = await supabase
+		.from('entregas')
+		.select('*')
+		.eq('tarea_id', tareaId)
+		.order('fecha_entrega', { ascending: false });
 
-    if (error) {
-      console.error('Error updating tarea:', error);
-      throw error;
-    }
-
-    return tarea;
-  } catch (error) {
-    console.error('Error in updateTask:', error);
-    throw error;
-  }
+	if (error) throw error;
+	return (data || []) as EntregaDB[];
 }
 
-/**
- * Elimina una tarea
- */
-export async function deleteTask(tareaId: string): Promise<void> {
-  try {
-    const { error } = await supabase
-      .from('tareas')
-      .delete()
-      .eq('id', tareaId);
+export async function upsertSubmission(entry: Partial<EntregaDB> & { tarea_id: string; alumno_id: string }) {
+	const { data, error } = await supabase
+		.from('entregas')
+		.upsert(entry, { onConflict: 'tarea_id,alumno_id' })
+		.select()
+		.single();
 
-    if (error) {
-      console.error('Error deleting tarea:', error);
-      throw error;
-    }
-  } catch (error) {
-    console.error('Error in deleteTask:', error);
-    throw error;
-  }
+	if (error) throw error;
+	return data as EntregaDB;
 }
 
-/**
- * Califica una entrega
- */
-export async function gradeSubmission(
-  entregaId: string,
-  calificacion: number,
-  comentarios?: string
-): Promise<TaskSubmission> {
-  try {
-    const { data: entrega, error } = await supabase
-      .from('entregas')
-      .update({
-        calificacion,
-        comentarios,
-        estado: 'calificada',
-      })
-      .eq('id', entregaId)
-      .select(`
-        *,
-        usuarios (
-          nombre,
-          apellido
-        )
-      `)
-      .single();
+export async function gradeSubmission(tareaId: string, alumnoId: string, calificacion: number, comentarios_profesor?: string) {
+	const { data, error } = await supabase
+		.from('entregas')
+		.update({ calificacion, comentarios_profesor, estado: 'revisada' })
+		.eq('tarea_id', tareaId)
+		.eq('alumno_id', alumnoId)
+		.select()
+		.single();
 
-    if (error) {
-      console.error('Error grading submission:', error);
-      throw error;
-    }
-
-    return {
-      id: entrega.id,
-      tarea_id: entrega.tarea_id,
-      alumno_id: entrega.alumno_id,
-      alumno_nombre: (entrega.usuarios as any)?.nombre || '',
-      alumno_apellido: (entrega.usuarios as any)?.apellido || '',
-      fecha_entrega: entrega.fecha_entrega,
-      archivo: entrega.archivo,
-      contenido: entrega.contenido,
-      calificacion: entrega.calificacion,
-      comentarios: entrega.comentarios,
-      estado: entrega.estado,
-      es_tarde: false, // Recalcular si es necesario
-    };
-  } catch (error) {
-    console.error('Error in gradeSubmission:', error);
-    throw error;
-  }
+	if (error) throw error;
+	return data as EntregaDB;
 }
+

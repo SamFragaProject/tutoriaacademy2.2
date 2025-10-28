@@ -19,7 +19,7 @@ import { Card, PrimaryButton, SecondaryButton, Chip } from "../ui";
 import { useAuth } from "../../hooks/useAuth";
 import type { TeacherContent, ContentType, ContentStatus } from "../../types";
 import * as contentManagement from "../../services/contentManagement";
-// import { ContentEditor } from "./ContentEditor"; // Temporalmente deshabilitado
+import { ContentEditor } from "./ContentEditor";
 
 export const ContentList: React.FC = () => {
   const { user } = useAuth();
@@ -347,8 +347,7 @@ export const ContentList: React.FC = () => {
         )}
       </div>
 
-      {/* Editor Modal - Temporalmente deshabilitado */}
-      {/* 
+      {/* Editor Modal */}
       <ContentEditor
         isOpen={isEditorOpen}
         onClose={() => {
@@ -358,7 +357,6 @@ export const ContentList: React.FC = () => {
         onSave={handleSave}
         editingContent={editingContent}
       />
-      */}
     </div>
   );
 };

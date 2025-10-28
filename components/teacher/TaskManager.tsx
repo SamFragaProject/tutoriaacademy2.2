@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
@@ -31,8 +31,10 @@ import {
 import { Card } from '../ui';
 import { useAuth } from '../../hooks/useAuth';
 import { NavLink } from 'react-router-dom';
-import { getGroupsByTeacher, getStudentsByGroup, TAREAS_MOCK, USERS_SCHOOL_MOCK } from '../../data/schoolMockData';
-import type { GroupoEscolar, Tarea, User as SchoolUser } from '../../types';
+import { fetchTeacherGroups, fetchGroupStudents } from '../../services/teacher/groups';
+import { fetchTasksByTeacher, createTask, updateTask, deleteTask, fetchTaskSubmissions } from '../../services/teacher/tasks';
+import type { TareaDB, EntregaDB, TareaTipo } from '../../services/teacher/tasks';
+import type { GrupoConEstadisticas, Alumno } from '../../services/teacher/groups';
 
 // ============================
 // INTERFACES Y TIPOS
@@ -205,64 +207,47 @@ const STATUS_COLORS: Record<TaskStatus, string> = {
 };
 
 // ============================
+// HELPER FUNCTIONS
+// ============================
+
+// Mapea el tipo de tarea de DB (string) a TaskType de UI
+const mapTareaTypeToTaskType = (tipo: string): TaskType => {
+  switch (tipo) {
+    case 'tarea': return 'homework';
+    case 'proyecto': return 'project';
+    case 'practica': return 'practice';
+    case 'lectura': return 'reading';
+    default: return 'homework';
+  }
+};
+
+// Mapea el tipo de tarea de UI (TaskType) a tipo de DB (TareaTipo)
+const mapTaskTypeToTareaTipo = (type: TaskType): TareaTipo => {
+  switch (type) {
+    case 'homework': return 'tarea';
+    case 'project': return 'proyecto';
+    case 'practice': return 'practica';
+    case 'reading': return 'lectura';
+    default: return 'tarea';
+  }
+};
+
+// Determina el status de una tarea según su estado en DB
+const mapStatusToTaskStatus = (tarea: TareaDB): TaskStatus => {
+  if (!tarea.activo) return 'draft';
+  if (tarea.fecha_entrega && new Date(tarea.fecha_entrega) < new Date()) return 'overdue';
+  return 'assigned';
+};
+
+// ============================
 // COMPONENTE PRINCIPAL
 // ============================
 
 export const TaskManager: React.FC = () => {
   const { user } = useAuth();
-  
-  // Cargar tareas reales del profesor
-  const realTareas = useMemo(() => {
-    if (!user?.id) return [];
-    return TAREAS_MOCK.filter(t => t.profesorId === user.id);
-  }, [user?.id]);
-  
-  // Convertir Tarea a Task para compatibilidad con el componente actual
-  const convertedTasks = useMemo((): Task[] => {
-    return realTareas.map(tarea => ({
-      id: tarea.id,
-      title: tarea.titulo,
-      description: tarea.descripcion,
-      type: tarea.tipo === 'tarea' ? 'homework' : tarea.tipo === 'proyecto' ? 'project' : 'practice' as TaskType,
-      subject: tarea.materia,
-      status: tarea.estado === 'asignada' ? 'assigned' : tarea.estado === 'en_progreso' ? 'in_progress' : tarea.estado === 'vencida' ? 'overdue' : 'graded' as TaskStatus,
-      createdAt: new Date(tarea.fechaCreacion),
-      dueDate: new Date(tarea.fechaLimite),
-      assignedTo: tarea.gruposAsignados,
-      totalPoints: tarea.puntosMaximos,
-      submittedCount: tarea.entregasRecibidas,
-      gradedCount: tarea.entregasCalificadas,
-      averageScore: tarea.promedioCalificacion,
-      instructions: tarea.instrucciones
-    }));
-  }, [realTareas]);
-  
-  // Cargar tareas del localStorage
-  const loadCustomTasks = (): Task[] => {
-    try {
-      const stored = localStorage.getItem(`customTasks_${user?.id}`);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // Convertir fechas de string a Date
-        return parsed.map((t: any) => ({
-          ...t,
-          createdAt: new Date(t.createdAt),
-          dueDate: new Date(t.dueDate)
-        }));
-      }
-    } catch (error) {
-      console.error('Error loading custom tasks:', error);
-    }
-    return [];
-  };
-  
-  // Combinar tareas reales + tareas custom
-  const allTasks = useMemo(() => {
-    const customTasks = loadCustomTasks();
-    return [...convertedTasks, ...customTasks];
-  }, [convertedTasks, user?.id]);
-  
-  const [tasks, setTasks] = useState<Task[]>(allTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [groups, setGroups] = useState<GrupoConEstadisticas[]>([]);
+  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<TaskStatus | 'all'>('all');
@@ -271,126 +256,121 @@ export const TaskManager: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   
-  // Actualizar tasks cuando cambien las tareas reales o custom
-  React.useEffect(() => {
-    setTasks(allTasks);
-  }, [allTasks]);
-  
-  // Guardar tareas custom en localStorage
-  const saveCustomTasks = (newTasks: Task[]) => {
-    try {
-      // Filtrar solo las tareas custom (las que no están en TAREAS_MOCK)
-      const customOnly = newTasks.filter(t => !convertedTasks.find(ct => ct.id === t.id));
-      localStorage.setItem(`customTasks_${user?.id}`, JSON.stringify(customOnly));
-    } catch (error) {
-      console.error('Error saving custom tasks:', error);
-    }
-  };
-
-  // Cargar entregas (submissions) del localStorage
-  const loadSubmissions = (taskId: string): TaskSubmission[] => {
-    try {
-      const stored = localStorage.getItem(`submissions_${taskId}`);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return parsed.map((s: any) => ({
-          ...s,
-          submittedAt: new Date(s.submittedAt)
+  // Cargar grupos y tareas del profesor desde Supabase
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      if (!user?.id) return;
+      setLoading(true);
+      try {
+        const [groupsData, tasksData] = await Promise.all([
+          fetchTeacherGroups(user.id),
+          fetchTasksByTeacher(user.id)
+        ]);
+        if (cancelled) return;
+        
+        setGroups(groupsData);
+        
+        // Convertir TareaDB a Task para compatibilidad con UI
+        const convertedTasks: Task[] = tasksData.map(t => ({
+          id: t.id,
+          title: t.titulo,
+          description: t.descripcion || '',
+          type: mapTareaTypeToTaskType(t.tipo),
+          subject: '', // Se puede extraer de grupo o usar materia si se agrega al schema
+          status: mapStatusToTaskStatus(t),
+          createdAt: new Date(t.created_at),
+          dueDate: t.fecha_entrega ? new Date(t.fecha_entrega) : new Date(),
+          assignedTo: [t.grupo_id], // IDs de grupos, no de estudiantes individuales
+          totalPoints: t.puntos_max,
+          submittedCount: 0, // Se calcula después con entregas
+          gradedCount: 0,
+          averageScore: undefined,
+          attachments: t.archivo_url ? [t.archivo_url] : [],
+          instructions: t.instrucciones ? JSON.stringify(t.instrucciones) : undefined
         }));
+        
+        setTasks(convertedTasks);
+      } catch (e) {
+        console.error('Error loading tasks:', e);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      return [];
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  // Cargar entregas (submissions) desde Supabase
+  const loadSubmissions = async (taskId: string): Promise<TaskSubmission[]> => {
+    try {
+      const entregas = await fetchTaskSubmissions(taskId);
+      return entregas.map(e => ({
+        id: e.id,
+        taskId: e.tarea_id,
+        studentId: e.alumno_id,
+        studentName: '', // Se completa con userData
+        submittedAt: new Date(e.fecha_entrega),
+        status: new Date(e.fecha_entrega) > (tasks.find(t => t.id === taskId)?.dueDate || new Date()) ? 'late' : 'on_time',
+        score: e.calificacion ?? undefined,
+        feedback: e.comentarios_profesor ?? undefined,
+        attachments: e.archivo_url ? [e.archivo_url] : []
+      }));
     } catch (error) {
       console.error('Error loading submissions:', error);
       return [];
     }
   };
 
-  // Guardar entregas en localStorage
-  const saveSubmissions = (taskId: string, submissions: TaskSubmission[]) => {
-    try {
-      localStorage.setItem(`submissions_${taskId}`, JSON.stringify(submissions));
-    } catch (error) {
-      console.error('Error saving submissions:', error);
-    }
+  // Guardar entregas (ya no usa localStorage, usa Supabase a través del servicio)
+  const saveSubmissions = async (taskId: string, submissions: TaskSubmission[]) => {
+    // No es necesario implementar aquí, las entregas se manejan con upsertSubmission en el servicio
+    console.log('Submissions are now managed directly via Supabase service');
   };
 
   // Obtener información de estudiantes para una tarea
-  const getStudentSubmissionInfo = (task: Task): StudentSubmissionInfo[] => {
-    const submissions = loadSubmissions(task.id);
+  const getStudentSubmissionInfo = async (task: Task): Promise<StudentSubmissionInfo[]> => {
+    const submissions = await loadSubmissions(task.id);
     const studentsList: StudentSubmissionInfo[] = [];
 
     // Obtener todos los grupos asignados a esta tarea
-    task.assignedTo.forEach(groupId => {
-      const students = getStudentsByGroup(groupId);
-      const group = getGroupsByTeacher(user?.id || '').find(g => g.id === groupId);
+    for (const groupId of task.assignedTo) {
+      try {
+        const students = await fetchGroupStudents(groupId);
+        const group = groups.find(g => g.id === groupId);
 
-      students.forEach(student => {
-        const submission = submissions.find(s => s.studentId === student.id);
-        
-        const isLate = submission && submission.submittedAt > task.dueDate;
-        const submissionStatus: StudentSubmissionInfo['submissionStatus'] = 
-          submission?.score !== undefined ? 'graded' :
-          submission ? (isLate ? 'late' : 'submitted') :
-          'pending';
+        for (const student of students) {
+          const submission = submissions.find(s => s.studentId === student.id);
+          
+          const isLate = submission && submission.submittedAt > task.dueDate;
+          const submissionStatus: StudentSubmissionInfo['submissionStatus'] = 
+            submission?.score !== undefined ? 'graded' :
+            submission ? (isLate ? 'late' : 'submitted') :
+            'pending';
 
-        studentsList.push({
-          id: student.id,
-          name: student.name,
-          avatar: '👤', // Default avatar since User interface doesn't have avatar property
-          group: group?.nombre || 'Sin grupo',
-          submissionStatus,
-          score: submission?.score,
-          submittedAt: submission?.submittedAt,
-          feedback: submission?.feedback
-        });
-      });
-    });
+          studentsList.push({
+            id: student.id,
+            name: `${student.nombre} ${student.apellidos || ''}`.trim(),
+            avatar: '👤',
+            group: group?.nombre || 'Sin grupo',
+            submissionStatus,
+            score: submission?.score,
+            submittedAt: submission?.submittedAt,
+            feedback: submission?.feedback
+          });
+        }
+      } catch (e) {
+        console.error(`Error loading students for group ${groupId}:`, e);
+      }
+    }
 
     return studentsList;
   };
 
-  // Inicializar datos de demo para entregas (solo si no existen)
-  const initDemoSubmissions = (taskId: string, studentIds: string[]) => {
-    const existing = loadSubmissions(taskId);
-    if (existing.length > 0) return; // Ya hay datos
-
-    // Crear entregas demo para algunos estudiantes
-    const demoSubmissions: TaskSubmission[] = [];
-    
-    // 60% de estudiantes han entregado
-    const submittedCount = Math.floor(studentIds.length * 0.6);
-    const submittedStudents = studentIds.slice(0, submittedCount);
-    
-    submittedStudents.forEach((studentId, index) => {
-      const student = USERS_SCHOOL_MOCK.find(u => u.id === studentId);
-      if (!student) return;
-
-      const task = tasks.find(t => t.id === taskId);
-      if (!task) return;
-
-      // Algunos entregaron a tiempo, otros tarde
-      const daysBeforeDue = Math.floor(Math.random() * 5) - 1; // -1 a 3 días antes
-      const submittedAt = new Date(task.dueDate);
-      submittedAt.setDate(submittedAt.getDate() + daysBeforeDue);
-
-      // 70% de los que entregaron ya están calificados
-      const isGraded = Math.random() > 0.3;
-      const score = isGraded ? Math.floor(Math.random() * 40 + 60) : undefined; // 60-100 puntos
-      
-      demoSubmissions.push({
-        id: `sub-${taskId}-${studentId}`,
-        taskId,
-        studentId,
-        studentName: student.name,
-        submittedAt,
-        status: daysBeforeDue < 0 ? 'late' : 'on_time',
-        score,
-        feedback: isGraded ? (score && score > 80 ? '¡Excelente trabajo!' : 'Buen esfuerzo, revisa los comentarios.') : undefined,
-        attachments: ['documento.pdf']
-      });
-    });
-
-    saveSubmissions(taskId, demoSubmissions);
+  // Inicializar datos de demo para entregas (ya no necesario con Supabase)
+  const initDemoSubmissions = async (taskId: string, studentIds: string[]) => {
+    // Con Supabase real, las entregas vienen de la DB, no se generan demos
+    console.log('Demo submissions not needed with real Supabase data');
   };
 
   // ============================
@@ -429,24 +409,23 @@ export const TaskManager: React.FC = () => {
     setSelectedTask(null);
   };
 
-  const handleSelectTask = (task: Task) => {
-    // Inicializar datos demo de entregas si no existen
-    const studentIds: string[] = [];
-    task.assignedTo.forEach(groupId => {
-      const students = getStudentsByGroup(groupId);
-      students.forEach(s => studentIds.push(s.id));
-    });
-    initDemoSubmissions(task.id, studentIds);
-    
+  const handleSelectTask = async (task: Task) => {
+    // Ya no necesitamos inicializar datos demo, usamos Supabase
     setSelectedTask(task);
     setIsCreating(false);
   };
 
-  const handleDeleteTask = (taskId: string) => {
+  const handleDeleteTask = async (taskId: string) => {
     if (confirm('¿Estás seguro de eliminar esta tarea?')) {
-      setTasks(prev => prev.filter(t => t.id !== taskId));
-      if (selectedTask?.id === taskId) {
-        setSelectedTask(null);
+      try {
+        await deleteTask(taskId);
+        setTasks(prev => prev.filter(t => t.id !== taskId));
+        if (selectedTask?.id === taskId) {
+          setSelectedTask(null);
+        }
+      } catch (e) {
+        console.error('Error deleting task:', e);
+        alert('Error al eliminar la tarea');
       }
     }
   };
@@ -844,12 +823,12 @@ export const TaskManager: React.FC = () => {
           {isCreating && (
             <CreateTaskModal
               onClose={() => setIsCreating(false)}
-              onSave={(newTask) => {
+              onSave={async (newTask) => {
                 const updatedTasks = [newTask, ...tasks];
                 setTasks(updatedTasks);
-                saveCustomTasks(updatedTasks);
                 setIsCreating(false);
               }}
+              teacherGroups={groups}
             />
           )}
         </AnimatePresence>
@@ -1133,16 +1112,12 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose, onDele
 interface CreateTaskModalProps {
   onClose: () => void;
   onSave: (task: Task) => void;
+  teacherGroups: GrupoConEstadisticas[];
 }
 
-const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, onSave }) => {
+const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, onSave, teacherGroups }) => {
   const { user } = useAuth();
-  
-  // Cargar grupos reales del profesor
-  const myGroups = useMemo(() => {
-    if (!user?.id) return [];
-    return getGroupsByTeacher(user.id);
-  }, [user?.id]);
+  const myGroups = teacherGroups; // Use the passed prop directly
   
   const [formData, setFormData] = useState({
     title: '',
@@ -1155,7 +1130,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, onSave }) =>
     instructions: ''
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validaciones
     if (!formData.title.trim()) {
       alert('❌ El título es requerido');
@@ -1182,31 +1157,60 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, onSave }) =>
       return;
     }
 
-    // Calcular total de estudiantes asignados
-    const totalStudents = myGroups
-      .filter(g => formData.assignedTo.includes(g.id))
-      .reduce((sum, g) => sum + g.estudiantes.length, 0);
+    if (!user?.id) {
+      alert('❌ Error: usuario no autenticado');
+      return;
+    }
 
-    const newTask: Task = {
-      id: `t${Date.now()}`,
-      ...formData,
-      status: 'assigned',
-      createdAt: new Date(),
-      dueDate: new Date(formData.dueDate),
-      submittedCount: 0,
-      gradedCount: 0,
-      assignedTo: formData.assignedTo
-    };
+    try {
+      // Crear tarea en Supabase para el primer grupo
+      // TODO: Si se seleccionan múltiples grupos, crear una tarea por grupo
+      const grupoId = formData.assignedTo[0];
+      
+      const tareaPayload = {
+        grupo_id: grupoId,
+        profesor_id: user.id,
+        titulo: formData.title,
+        descripcion: formData.description,
+        tipo: mapTaskTypeToTareaTipo(formData.type),
+        fecha_entrega: new Date(formData.dueDate).toISOString(),
+        puntos_max: formData.totalPoints,
+        archivo_url: null, // No se sube archivo en este flujo
+        instrucciones: formData.instructions ? { text: formData.instructions } : null,
+        activo: true
+      };
 
-    onSave(newTask);
-    
-    // Mensaje de éxito
-    const groupNames = myGroups
-      .filter(g => formData.assignedTo.includes(g.id))
-      .map(g => g.nombre)
-      .join(', ');
-    
-    alert(`✅ Tarea creada exitosamente!\n\n📝 "${formData.title}"\n👥 Asignada a: ${groupNames}\n📅 Fecha límite: ${new Date(formData.dueDate).toLocaleDateString('es-ES')}\n⭐ Puntos: ${formData.totalPoints}`);
+      const createdTarea = await createTask(tareaPayload);
+
+      // Convertir la tarea creada al tipo Task de UI
+      const newTask: Task = {
+        id: createdTarea.id,
+        title: createdTarea.titulo,
+        description: createdTarea.descripcion || '',
+        type: mapTareaTypeToTaskType(createdTarea.tipo),
+        subject: '',
+        status: mapStatusToTaskStatus(createdTarea),
+        createdAt: new Date(createdTarea.created_at),
+        dueDate: new Date(createdTarea.fecha_entrega!),
+        assignedTo: [createdTarea.grupo_id],
+        totalPoints: createdTarea.puntos_max,
+        submittedCount: 0,
+        gradedCount: 0
+      };
+
+      onSave(newTask);
+
+      // Mensaje de éxito
+      const groupNames = myGroups
+        .filter(g => formData.assignedTo.includes(g.id))
+        .map(g => g.nombre)
+        .join(', ');
+      
+      alert(`✅ Tarea creada exitosamente!\n\n📝 "${formData.title}"\n👥 Asignada a: ${groupNames}\n📅 Fecha límite: ${new Date(formData.dueDate).toLocaleDateString('es-ES')}\n⭐ Puntos: ${formData.totalPoints}`);
+    } catch (error) {
+      console.error('Error creating task:', error);
+      alert('❌ Error al crear la tarea. Por favor intenta de nuevo.');
+    }
   };
 
   return (

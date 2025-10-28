@@ -5,17 +5,10 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PublicLayout, StudentLayout, TeacherLayout, DirectorLayout, AdminLayout } from './components/Layout';
 import { HomePage, BlogIndexPage, BlogPostPage, HelpPage, LegalPage } from './pages/PublicPages';
 import { LoginPage } from './src/pages/LoginPage';
-import { RegisterPage } from './src/pages/RegisterPage';
-import { ForgotPasswordPage } from './src/pages/ForgotPasswordPage';
 import { DashboardPage, SubjectsPage, SyllabusPage, AgendaPage, StatisticsPage, TutorPage, DiagnosisPage, PracticesPage, SimulacroPage, RankingPage, ConfigurationPage, GamesPage, GeneratingPlanPage, OnboardingPage, LibraryPage, ExamPage } from './pages/StudentPages';
-import { TeacherDashboardPage, GroupsPage, QuestionBankPage, TeacherExamsPage, TeacherResultsPage, TutorCopilotPage, ScreeningPage, GradingPage, AIExamCreatorPage, TaskManagerPage, CommunicationHubPage, ContentManagementPage } from './pages/TeacherPages';
-import TaskForm from './components/teacher/TaskForm';
-import TaskDetail from './components/teacher/TaskDetail';
-import { GroupDetailPage } from './pages/GroupDetailPage';
+import { TeacherDashboardPage, GroupsPage, QuestionBankPage, TeacherExamsPage, TeacherResultsPage, TutorCopilotPage, ScreeningPage, GradingPage, AIExamCreatorPage, TaskManagerPage, CommunicationHubPage } from './pages/TeacherPages';
 import { DirectorDashboardPage, SchoolManagementPage, TeachersPage, AcademicAnalysisPage, SubscriptionPage, StudentsPage } from './pages/DirectorPages';
 import { AdminHomePage, UsersPage, DocumentsPage, TutorsPage, MetricsPage, EmailsPage, ApisPage } from './pages/AdminPages';
-// Nuevas páginas admin con Supabase
-import { AdminDashboard, AdminUsers, AdminSchools, AdminGroups } from './src/pages/admin';
 import { useAuth } from './hooks/useAuth';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ToastContainer, useToast } from './components/Toast';
@@ -60,8 +53,6 @@ const AppContent: React.FC = () => {
 
         {/* Auth Pages */}
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         
         {/* B2B Onboarding */}
         <Route path="/setup" element={<OnboardingB2BPage />} />
@@ -92,7 +83,6 @@ const AppContent: React.FC = () => {
         <Route path="/docente" element={<ProtectedRoute requiredRole="profesor"><ErrorBoundary><TeacherLayout /></ErrorBoundary></ProtectedRoute>}>
           <Route path="dashboard" element={<ErrorBoundary><TeacherDashboardPage /></ErrorBoundary>} />
           <Route path="grupos" element={<GroupsPage />} />
-          <Route path="grupos/:groupId" element={<GroupDetailPage />} />
           <Route path="banco-preguntas" element={<QuestionBankPage />} />
           <Route path="examenes" element={<TeacherExamsPage />} />
           <Route path="calificaciones" element={<GradingPage />} />
@@ -101,11 +91,7 @@ const AppContent: React.FC = () => {
           <Route path="screening" element={<ScreeningPage />} />
           <Route path="crear-examen-ia" element={<AIExamCreatorPage />} />
           <Route path="tareas" element={<TaskManagerPage />} />
-          <Route path="tareas/crear" element={<TaskForm />} />
-          <Route path="tareas/:taskId" element={<TaskDetail />} />
-          <Route path="tareas/:taskId/editar" element={<TaskForm />} />
           <Route path="comunicacion" element={<CommunicationHubPage />} />
-          <Route path="contenido" element={<ContentManagementPage />} />
           <Route index element={<Navigate to="dashboard" />} />
         </Route>
         
@@ -124,19 +110,13 @@ const AppContent: React.FC = () => {
         {/* Admin Pages */}
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminLayout /></ProtectedRoute>}>
             <Route path="inicio" element={<AdminHomePage />} />
-            {/* Nuevas páginas admin con Supabase */}
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="usuarios" element={<AdminUsers />} />
-            <Route path="escuelas" element={<AdminSchools />} />
-            <Route path="grupos" element={<AdminGroups />} />
-            {/* Páginas admin antiguas */}
-            <Route path="usuarios-old" element={<UsersPage />} />
+            <Route path="usuarios" element={<UsersPage />} />
             <Route path="documentos" element={<DocumentsPage />} />
             <Route path="tutores" element={<TutorsPage />} />
             <Route path="metricas" element={<MetricsPage />} />
             <Route path="correos" element={<EmailsPage />} />
             <Route path="apis" element={<ApisPage />} />
-            <Route index element={<Navigate to="dashboard" />} />
+            <Route index element={<Navigate to="inicio" />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" />} />

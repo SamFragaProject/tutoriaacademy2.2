@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/card';
 import { Chip } from '../components/ui/chip';
 import { PrimaryButton, SecondaryButton, ProgressBar } from '../components/ui';
@@ -10,7 +9,6 @@ import { BarChart as RBarChart, Bar, XAxis, ResponsiveContainer, Tooltip } from 
 import { useToast } from '../components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SubtopicResult, TutorCopilotReport, StudentFocusReport } from '../types';
-import * as teacherService from '../services/teacher';
 import * as tutorCopilot from '../services/tutorCopilot';
 import MathMarkdown from '../components/MathMarkdown';
 import { NavLink } from 'react-router-dom';
@@ -21,17 +19,16 @@ import { useItems } from '../src/services/hooks/items';
 import { useTopics, useExamBlueprints } from '../src/services/hooks/exams';
 import type { Item, ExamBlueprint } from '../src/schemas/item';
 import { ScreeningDashboard } from '../components/teacher/ScreeningDashboard';
+import { fetchTeacherKPIs, fetchHeatmapData } from '../services/teacher/analytics';
+import { fetchTeacherGroups } from '../services/teacher/groups';
 import { GradingInterface } from '../components/teacher/GradingInterface';
 import { EnhancedTeacherDashboard } from '../components/teacher/EnhancedTeacherDashboard';
 import { EnhancedExamCreator } from '../components/teacher/EnhancedExamCreator';
 import { ExamCreatorSimple } from '../components/teacher/ExamCreatorSimple';
 import { EnhancedExamCreatorTest } from '../components/teacher/EnhancedExamCreatorTest';
 import { TaskManager } from '../components/teacher/TaskManager';
-import TasksManager from '../components/teacher/TasksManager';
 import { CommunicationHub } from '../components/teacher/CommunicationHub';
-import { ContentList } from '../components/teacher/ContentList';
 import { SimpleTeacherDashboard } from './SimpleTeacherDashboard';
-import { useQuery } from '@tanstack/react-query';
 import '../styles/neo-glass.css';
 
 
@@ -97,18 +94,31 @@ const KpiProgressCard: React.FC<{ title: string; value: number; description: str
 );
 
 export const TeacherDashboardPage: React.FC = () => {
-    const { userData } = useAuth();
+    const { user, userData } = useAuth();
+    const [kpis, setKpis] = useState<{ totalStudents: number; activeGroups: number; pendingExams: number; averageScore: number } | null>(null);
     
     useEffect(() => {
         document.body.classList.add('neo-enterprise');
         return () => document.body.classList.remove('neo-enterprise');
     }, []);
 
+    // Cargar KPIs reales del profesor
+    useEffect(() => {
+        let cancelled = false;
+        const load = async () => {
+            if (!user?.id) return;
+            const data = await fetchTeacherKPIs(user.id);
+            if (!cancelled) setKpis(data);
+        };
+        load();
+        return () => { cancelled = true; };
+    }, [user?.id]);
+
     const stats = [
-        { label: 'Total Estudiantes', value: '156', change: '+12%', icon: Users, positive: true },
-        { label: 'Grupos Activos', value: '8', change: '+2', icon: Users, positive: true },
-        { label: 'Exámenes Pendientes', value: '4', change: 'Esta semana', icon: FileText, positive: false },
-        { label: 'Promedio General', value: '8.4', change: '+0.3', icon: Award, positive: true },
+        { label: 'Total Estudiantes', value: kpis ? String(kpis.totalStudents) : '—', change: '', icon: Users, positive: true },
+        { label: 'Grupos Activos', value: kpis ? String(kpis.activeGroups) : '—', change: '', icon: Users, positive: true },
+        { label: 'Exámenes Pendientes', value: kpis ? String(kpis.pendingExams) : '—', change: 'Esta semana', icon: FileText, positive: false },
+        { label: 'Promedio General', value: kpis ? String(kpis.averageScore) : '—', change: '', icon: Award, positive: true },
     ];
 
     const recentActivities = [
@@ -155,7 +165,9 @@ export const TeacherDashboardPage: React.FC = () => {
             {/* Quick Actions Chips */}
             <div className="flex flex-wrap items-center gap-3 mb-8">
                 {quickActions.map((action, i) => (
-                    <Chip icon={action.icon} label={action.label} variant={action.variant} />
+                    <React.Fragment key={i}>
+                        <Chip icon={action.icon} label={action.label} variant={action.variant} />
+                    </React.Fragment>
                 ))}
             </div>
 
@@ -278,102 +290,80 @@ export const TeacherDashboardPage: React.FC = () => {
 };
 
 export const GroupsPage: React.FC = () => {
-    const navigate = useNavigate();
     const { user } = useAuth();
+    const [groups, setGroups] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Obtener grupos del profesor desde Supabase
-    const { data: grupos, isLoading, error } = useQuery({
-        queryKey: ['teacher-groups', user?.id],
-        queryFn: () => teacherService.fetchTeacherGroups(user?.id || ''),
-        enabled: !!user?.id,
-    });
-
-    if (isLoading) {
-        return (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-center h-96">
-                <div className="text-center">
-                    <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-                    <p className="text-text-secondary">Cargando grupos...</p>
-                </div>
-            </motion.div>
-        );
-    }
-
-    if (error) {
-        return (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-center h-96">
-                <div className="text-center">
-                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-text-primary mb-2">Error al cargar los grupos</h3>
-                    <p className="text-text-secondary mb-4">{(error as Error).message}</p>
-                    <p className="text-sm text-text-secondary">Asegúrate de haber ejecutado disable_rls_all_tables.sql en Supabase</p>
-                </div>
-            </motion.div>
-        );
-    }
-
-    if (!grupos || grupos.length === 0) {
-        return (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <PageHeader title="Mis Grupos" subtitle="Gestiona tus grupos y alumnos." />
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                        <Users className="w-16 h-16 text-text-secondary mx-auto mb-4 opacity-50" />
-                        <h3 className="text-xl font-bold text-text-primary mb-2">No tienes grupos asignados</h3>
-                        <p className="text-text-secondary">Contacta al administrador para que te asigne grupos</p>
-                    </div>
-                </div>
-            </motion.div>
-        );
-    }
+    useEffect(() => {
+        let cancelled = false;
+        const load = async () => {
+            if (!user?.id) return;
+            setLoading(true);
+            setError(null);
+            try {
+                const data = await fetchTeacherGroups(user.id);
+                if (!cancelled) setGroups(data);
+            } catch (e: any) {
+                if (!cancelled) setError(e?.message || 'Error al cargar grupos');
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        };
+        load();
+        return () => { cancelled = true; };
+    }, [user?.id]);
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <PageHeader title="Mis Grupos" subtitle="Gestiona tus grupos y alumnos." />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {grupos.map((group, index) => (
-                    <motion.div
-                        key={group.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        whileHover={{ y: -8, scale: 1.02 }}
-                    >
-                        <Card className="border-2 hover:border-primary/50 transition-all bg-gradient-to-br from-purple-500/5 to-blue-500/5 relative overflow-hidden group cursor-pointer">
-                            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                            <div className="relative">
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg">
-                                        <BookCopy className="w-6 h-6 text-white" />
+            {loading ? (
+                <div className="text-text-secondary">Cargando grupos...</div>
+            ) : error ? (
+                <div className="text-red-400">{error}</div>
+            ) : groups.length === 0 ? (
+                <Card className="p-6">No tienes grupos activos todavía.</Card>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {groups.map((group, index) => (
+                        <motion.div
+                            key={group.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.06 }}
+                            whileHover={{ y: -8, scale: 1.02 }}
+                        >
+                            <Card className="border-2 hover:border-primary/50 transition-all bg-gradient-to-br from-purple-500/5 to-blue-500/5 relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                <div className="relative">
+                                    <div className="flex items-start justify-between mb-3">
+                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg">
+                                            <BookCopy className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div className="px-3 py-1 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30">
+                                            <span className="text-xs font-bold text-green-600 dark:text-green-400">
+                                                {group.total_alumnos} alumnos
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="px-3 py-1 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30">
-                                        <span className="text-xs font-bold text-green-600 dark:text-green-400">
-                                            {group.total_alumnos} alumnos
-                                        </span>
+                                    <h3 className="text-xl font-black text-text-primary mb-1">{group.nombre}</h3>
+                                    <p className="text-text-secondary font-semibold">{group.materia}</p>
+                                    <div className="grid grid-cols-3 gap-2 mt-3 text-xs text-text-secondary">
+                                        <div>Prom: <span className="font-bold text-text-primary">{group.promedio_general?.toFixed?.(1) ?? group.promedio_general}</span></div>
+                                        <div>Asist: <span className="font-bold text-text-primary">{Math.round(group.tasa_asistencia)}%</span></div>
+                                        <div>Pend.: <span className="font-bold text-text-primary">{group.tareas_pendientes}</span></div>
+                                    </div>
+                                    <div className="mt-4 pt-4 border-t border-border">
+                                        <SecondaryButton className="w-full">
+                                            Ver Detalles
+                                        </SecondaryButton>
                                     </div>
                                 </div>
-                                <h3 className="text-xl font-black text-text-primary mb-1">{group.nombre}</h3>
-                                <p className="text-text-secondary font-semibold">{group.materia}</p>
-                                {group.nivel && (
-                                    <p className="text-xs text-text-secondary mt-1">{group.nivel}</p>
-                                )}
-                                <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-xs text-text-secondary">
-                                    <span>Promedio: {group.promedio_general.toFixed(1)}</span>
-                                    <span>Asistencia: {group.tasa_asistencia.toFixed(0)}%</span>
-                                </div>
-                                <div className="mt-4 pt-4 border-t border-border">
-                                    <SecondaryButton 
-                                        className="w-full"
-                                        onClick={() => navigate(`/docente/grupos/${group.id}`)}
-                                    >
-                                        Ver Detalles
-                                    </SecondaryButton>
-                                </div>
-                            </div>
-                        </Card>
-                    </motion.div>
-                ))}
-            </div>
+                            </Card>
+                        </motion.div>
+                    ))}
+                </div>
+            )}
         </motion.div>
     );
 };
@@ -535,81 +525,101 @@ const Heatmap: React.FC<{ data: SubtopicResult[] }> = ({ data }) => {
 
 
 export const TeacherResultsPage: React.FC = () => {
-    const [selectedGroupId, setSelectedGroupId] = useState<string>(MOCK_TEACHER_GROUPS[0]?.id || '');
+    const { user } = useAuth();
+    const { addToast } = useToast();
+    const [groups, setGroups] = useState<any[]>([]);
+    const [selectedGroup, setSelectedGroup] = useState<string>('');
+    const [heatmap, setHeatmap] = useState<SubtopicResult[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedSubtopic, setSelectedSubtopic] = useState<SubtopicResult | null>(null);
+
+    const handleCreateReinforcement = (subtopic: string) => {
+        addToast(
+            <div className="flex items-center gap-2 bg-surface-1 p-3 rounded-lg border border-border">
+                <Zap size={18} className="text-green-400" />
+                <span className="font-semibold text-text-primary">Refuerzo para "{subtopic}" asignado.</span>
+            </div>
+        );
+    };
+
+    useEffect(() => {
+        let cancelled = false;
+        const loadGroups = async () => {
+            if (!user?.id) return;
+            try {
+                const data = await fetchTeacherGroups(user.id);
+                if (cancelled) return;
+                setGroups(data);
+                if (data.length) setSelectedGroup(data[0].id);
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        loadGroups();
+        return () => { cancelled = true; };
+    }, [user?.id]);
+
+    useEffect(() => {
+        let cancelled = false;
+        const loadHeatmap = async () => {
+            if (!selectedGroup) { setHeatmap([]); setLoading(false); return; }
+            setLoading(true);
+            try {
+                const data = await fetchHeatmapData(selectedGroup);
+                if (!cancelled) {
+                    setHeatmap(data);
+                    setSelectedSubtopic(data[0] || null);
+                }
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        };
+        loadHeatmap();
+        return () => { cancelled = true; };
+    }, [selectedGroup]);
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <PageHeader title="Resultados por Materia" subtitle="Mapa de calor y análisis de rendimiento." />
-
-            <Card className="mb-6">
-                <label className="block mb-2 text-sm font-bold text-text-primary">
-                    Selecciona un Grupo
-                </label>
-                <select
-                    value={selectedGroupId}
-                    onChange={(e) => setSelectedGroupId(e.target.value)}
-                    className="w-full px-4 py-2 border border-border rounded-lg bg-background text-text-primary"
-                >
-                    {MOCK_TEACHER_GROUPS.map((group) => (
-                        <option key={group.id} value={group.id}>
-                            {group.name} - {group.subject}
-                        </option>
-                    ))}
-                </select>
-            </Card>
-
-            {/* Heatmap */}
-            <Card className="mb-6">
-                <h2 className="text-2xl font-black text-text-primary mb-4">
-                    Mapa de Calor - Rendimiento por Subtema
-                </h2>
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr>
-                                <th className="border border-border px-4 py-2 text-left bg-background-secondary font-bold text-text-primary">
-                                    Estudiante
-                                </th>
-                                {MOCK_HEATMAP_DATA.map((subtopic) => (
-                                    <th
-                                        key={subtopic.subtopic}
-                                        className="border border-border px-4 py-2 text-center bg-background-secondary font-bold text-text-primary"
-                                    >
-                                        {subtopic.subtopic}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {MOCK_HEATMAP_DATA[0]?.results.map((student) => (
-                                <tr key={student.studentId}>
-                                    <td className="border border-border px-4 py-2 font-semibold text-text-primary">
-                                        {student.studentName}
-                                    </td>
-                                    {MOCK_HEATMAP_DATA.map((subtopic) => {
-                                        const studentScore = subtopic.results.find(r => r.studentId === student.studentId)?.score || 0;
-                                        let bgColor = 'bg-gray-100 dark:bg-gray-800';
-                                        if (studentScore >= 90) bgColor = 'bg-green-500';
-                                        else if (studentScore >= 75) bgColor = 'bg-blue-500';
-                                        else if (studentScore >= 60) bgColor = 'bg-yellow-500';
-                                        else bgColor = 'bg-red-500';
-
-                                        return (
-                                            <td
-                                                key={subtopic.subtopic}
-                                                className={`border border-border px-4 py-2 text-center ${bgColor} text-white font-bold`}
-                                            >
-                                                {studentScore}
-                                            </td>
-                                        );
-                                    })}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+        <div>
+            <PageHeader title="Resultados y Analíticas" subtitle="Analiza el rendimiento de tus alumnos por subtema." />
+            <Card>
+                <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                    <h2 className="text-xl font-bold text-text-primary">Heatmap de Rendimiento</h2>
+                    <select 
+                        className="bg-surface-1 border border-border rounded-input px-3 py-1.5 text-sm w-full sm:w-auto"
+                        value={selectedGroup}
+                        onChange={e => setSelectedGroup(e.target.value)}
+                    >
+                        {groups.map(g => <option key={g.id} value={g.id}>{g.nombre} ({g.materia})</option>)}
+                    </select>
                 </div>
+                {loading ? (
+                    <div className="text-text-secondary p-4">Cargando datos...</div>
+                ) : (
+                    <Heatmap data={heatmap} />
+                )}
             </Card>
-        </motion.div>
+            
+            <Card className="mt-6">
+                 <h2 className="text-xl font-bold text-text-primary mb-4">Refuerzo 1-Clic</h2>
+                 <p className="text-text-secondary text-sm mb-4">Selecciona un subtema con bajo rendimiento para asignar automáticamente un mini-quiz de refuerzo.</p>
+                 <div className="flex flex-col sm:flex-row items-center gap-4">
+                     <select
+                        onChange={(e) => setSelectedSubtopic(heatmap.find(d => d.subtopic === e.target.value) || null)}
+                        value={selectedSubtopic?.subtopic || ''}
+                        className="bg-surface-1 border border-border rounded-input px-3 py-2 text-sm w-full sm:w-auto flex-grow"
+                     >
+                        {heatmap.map(d => <option key={d.subtopic} value={d.subtopic}>{d.subtopic}</option>)}
+                     </select>
+                     <PrimaryButton 
+                        onClick={() => selectedSubtopic && handleCreateReinforcement(selectedSubtopic.subtopic)}
+                        disabled={!selectedSubtopic || !heatmap.some(d => d.subtopic === selectedSubtopic.subtopic)}
+                        className="w-full sm:w-auto"
+                     >
+                        <Zap size={16} className="mr-2"/> Asignar Refuerzo
+                    </PrimaryButton>
+                 </div>
+            </Card>
+        </div>
     );
 };
 
@@ -642,7 +652,7 @@ export const TutorCopilotPage: React.FC = () => {
      const handleCreateReinforcement = (student: StudentFocusReport) => {
         if (!user) return;
         tutorCopilot.assignReinforcement({
-            teacherName: userData?.nombre || user.email || 'Profesor',
+            teacherName: (userData?.nombre || user.email || 'Profesor') as string,
             studentId: student.studentId,
             subject: student.subject,
             mainTopic: student.mainTopic,
@@ -781,7 +791,9 @@ export const GradingPage: React.FC = () => {
 
             <div className="flex flex-wrap items-center gap-3 mb-6">
                 {filtros.map((f, i) => (
-                    <Chip label={f.label} variant={f.variant} />
+                    <React.Fragment key={i}>
+                        <Chip label={f.label} variant={f.variant} />
+                    </React.Fragment>
                 ))}
             </div>
 
@@ -866,7 +878,7 @@ export const AIExamCreatorPage: React.FC = () => {
  * Página de Gestión de Tareas
  */
 export const TaskManagerPage: React.FC = () => {
-    return <TasksManager />;
+    return <TaskManager />;
 };
 
 /**
@@ -874,11 +886,4 @@ export const TaskManagerPage: React.FC = () => {
  */
 export const CommunicationHubPage: React.FC = () => {
     return <CommunicationHub />;
-};
-
-/**
- * Página de Gestión de Contenido (CMS)
- */
-export const ContentManagementPage: React.FC = () => {
-    return <ContentList />;
 };

@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
-import { Card } from '../../../components/ui/card';
-import { PrimaryButton, SecondaryButton } from '../../../components/ui';
+import { Card } from '../../components/ui/card';
+import { PrimaryButton, SecondaryButton } from '../../components/ui';
 import { Search, Edit, Trash2, Eye } from 'lucide-react';
 
 interface Column<T> {
